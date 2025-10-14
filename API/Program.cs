@@ -50,11 +50,6 @@ var services = scope.ServiceProvider;
 try
 {
     var context = services.GetRequiredService<MongoDbContext>();
-    //var userManager = services.GetRequiredService<UserManager<User>>();
-    //var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
-    // await context.Database.MigrateAsync();
-    // await Seed.SeedData(context);
-    // await Seed.SeedUsers(userManager, roleManager);
 }
 catch (Exception ex)
 {

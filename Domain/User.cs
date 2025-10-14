@@ -31,7 +31,7 @@ namespace Domain
         public DateTime DatumRodjenja { get; set; }
 
         [BsonElement("role")]
-        public string Role { get; set; } // "Operator", "Supervisor", "Leader"
+        public string Role { get; set; } // "ProductionOperator", "QualitySupervisor", "BusinessLeader"
 
         [BsonElement("refreshTokens")]
         public List<RefreshToken> RefreshTokens { get; set; } = new();
