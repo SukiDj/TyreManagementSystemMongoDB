@@ -32,7 +32,6 @@ namespace API.Extensions
                 });
             });
 
-            // ===== Mongo wiring (replaces EF) =====
             services.Configure<MongoOptions>(config.GetSection("Mongo"));
 
             services.AddSingleton<IMongoClient>(sp =>
@@ -44,9 +43,6 @@ namespace API.Extensions
             });
 
             services.AddSingleton<MongoDbContext>();
-
-            // ===== Repositories =====
-            //services.AddScoped<ITyreRepository, TyreRepository>();
 
             // MediatR / AutoMapper / Validation
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Application.Tyres.List.Handler).Assembly));
