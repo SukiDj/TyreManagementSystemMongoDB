@@ -1,0 +1,16 @@
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import 'semantic-ui-css/semantic.min.css'
+import 'semantic-ui-css/semantic.min.css'
+import 'react-toastify/ReactToastify.min.css'
+import { RouterProvider } from 'react-router-dom'
+import { store, StoreContext } from './app/stores/store'
+import { router } from './app/router/Routes'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <StoreContext.Provider value={store}>
+      <RouterProvider router={router} />
+    </StoreContext.Provider>
+  </React.StrictMode>,
+)
