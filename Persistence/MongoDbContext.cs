@@ -3,7 +3,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Microsoft.Extensions.Options;
 
-namespace Persistence.Mongo;
+namespace Persistence;
 
 public interface IMongoDbContext
 {

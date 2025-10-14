@@ -5,7 +5,7 @@ using Application.Productions;
 using Application.Sales;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using Persistence.Mongo;
+using Persistence;
 using Persistence.Mongo.Repositories;
 using Infrastructure.Security;
 using Microsoft.Extensions.Configuration;

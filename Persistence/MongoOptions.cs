@@ -1,4 +1,4 @@
-namespace Persistence.Mongo
+namespace Persistence
 {
     public class MongoOptions
     {

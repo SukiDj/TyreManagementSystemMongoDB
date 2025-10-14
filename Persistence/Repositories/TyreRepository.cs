@@ -1,12 +1,12 @@
 using MongoDB.Driver;
-using Persistence.Mongo;
+using Persistence;
 using Domain; // Tyre.cs is in your Domain project
 
-namespace Persistence.Mongo.Repositories
+namespace Persistence.Repositories
 {
     public interface ITyreRepository
     {
-        Task<Tyre?> GetByIdAsync(string id, CancellationToken ct = default);
+        Task<Tyre> GetByIdAsync(string id, CancellationToken ct = default);
         Task<List<Tyre>> GetAllAsync(CancellationToken ct = default);
         Task CreateAsync(Tyre tyre, CancellationToken ct = default);
         Task UpdateAsync(string id, Tyre tyre, CancellationToken ct = default);
@@ -22,7 +22,7 @@ namespace Persistence.Mongo.Repositories
             _tyres = ctx.GetCollection<Tyre>("tyres"); // collection name
         }
 
-        public Task<Tyre?> GetByIdAsync(string id, CancellationToken ct = default) =>
+        public Task<Tyre> GetByIdAsync(string id, CancellationToken ct = default) =>
             _tyres.Find(x => x.Id == id).FirstOrDefaultAsync(ct);
 
         public Task<List<Tyre>> GetAllAsync(CancellationToken ct = default) =>
