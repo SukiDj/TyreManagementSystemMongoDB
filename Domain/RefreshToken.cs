@@ -1,12 +1,23 @@
-namespace Domain;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
-public class RefreshToken
+namespace Domain
 {
-    public int Id { get; set; }
-        public User User { get; set; }
+    public class RefreshToken
+    {
+        [BsonElement("token")]
         public string Token { get; set; }
+
+        [BsonElement("expires")]
         public DateTime Expires { get; set; } = DateTime.UtcNow.AddDays(7);
-        public bool IsExpired => DateTime.UtcNow >= Expires;
+
+        [BsonElement("revoked")]
         public DateTime? Revoked { get; set; }
+
+        [BsonIgnore]
+        public bool IsExpired => DateTime.UtcNow >= Expires;
+
+        [BsonIgnore]
         public bool IsActive => Revoked == null && !IsExpired;
+    }
 }
