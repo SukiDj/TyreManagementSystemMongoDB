@@ -1,23 +1,36 @@
-using Application.Tyres;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Persistence.Mongo.Repositories;
+using Domain;
 
 namespace API.Controllers
 {
-    [AllowAnonymous]
-    public class TyreController : BaseApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TyreController : ControllerBase
     {
-        [HttpGet("GetTyres")]
-        public async Task<IActionResult> GetTyres()
+        private readonly ITyreRepository _repo;
+
+        public TyreController(ITyreRepository repo)
         {
-            return HandleResult(await Mediator.Send(new List.Query()));
+            _repo = repo;
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<Tyre>>> GetAll(CancellationToken ct)
+        {
+            var tyres = await _repo.GetAllAsync(ct);
+            return Ok(tyres);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetTyre(Guid id)
+        [AllowAnonymous]
+        public async Task<ActionResult<Tyre>> GetById(string id, CancellationToken ct)
         {
-            return HandleResult(await Mediator.Send(new Details.Query{Id = id}));
+            var tyre = await _repo.GetByIdAsync(id, ct);
+            if (tyre is null) return NotFound();
+            return Ok(tyre);
         }
-
     }
 }

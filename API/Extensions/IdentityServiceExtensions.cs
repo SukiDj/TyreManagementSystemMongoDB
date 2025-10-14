@@ -1,10 +1,8 @@
-using System.Text;
-using API.Services;
 using Domain;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
-using Persistence;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace API.Extensions;
 
@@ -12,73 +10,52 @@ public static class IdentityServiceExtensions
 {
     public static IServiceCollection AddIdentityServices(this IServiceCollection services, IConfiguration config)
     {
+        // Core Identity without EF stores; you'll plug in Mongo-backed stores later
         services.AddIdentityCore<User>(opt =>
         {
             opt.Password.RequireNonAlphanumeric = false;
             opt.User.RequireUniqueEmail = true;
+        })
+        .AddRoles<AppRole>()
+        .AddRoleManager<RoleManager<AppRole>>()
+        .AddSignInManager<SignInManager<User>>()    // still useful for cookie flows
+        .AddDefaultTokenProviders();                // OK to keep (password reset, etc.), not JWT
 
-        }).AddRoles<AppRole>()
-          .AddRoleManager<RoleManager<AppRole>>()
-          .AddEntityFrameworkStores<DataContext>() //da kreira sve tabele povezane sa identitijem
-          .AddSignInManager<SignInManager<User>>() // NOVO: Dodajemo SignInManager
-          .AddDefaultTokenProviders(); // NOVO: Dodajemo default token providere
-
-        //NOVI deo
+        // Authentication: COOKIE ONLY (no JWT)
         services.AddAuthentication(options =>
         {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultSignInScheme = IdentityConstants.ApplicationScheme; // Dodajemo ovo za Identity.Application
-        })
-        .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, opt =>
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["TokenKey"]));
-            opt.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-            opt.Events = new JwtBearerEvents
-            {
-                OnMessageReceived = context =>
-                {
-                    var accessToken = context.Request.Query["access_token"];
-                    var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/chat")))
-                    {
-                        context.Token = accessToken;
-                    }
-                    return Task.CompletedTask;
-                }
-            };
+            options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+            options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+            options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
         })
         .AddCookie(IdentityConstants.ApplicationScheme, options =>
         {
             options.LoginPath = "/account/login";
             options.LogoutPath = "/account/logout";
             options.AccessDeniedPath = "/account/access-denied";
+            options.SlidingExpiration = true;
+            // options.Cookie.Name = "tms.auth"; // optional
         });
 
-        //pravim polise za autorizaciju koje ce da se koriste iznad funkcija da se odredi ko sme da pozove fju
-        services.AddAuthorization(options => {
-            options.AddPolicy("RequireQualitySupervisorRole", policy => 
+        // Authorization policies (your controllers can keep using them)
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("RequireQualitySupervisorRole", policy =>
                 policy.RequireRole("QualitySupervisor"));
-            options.AddPolicy("RequireBusinessUnitLeaderRole", policy => 
+            options.AddPolicy("RequireBusinessUnitLeaderRole", policy =>
                 policy.RequireRole("BusinessUnitLeader"));
-            options.AddPolicy("RequireProductionOperatorRole", policy => 
+            options.AddPolicy("RequireProductionOperatorRole", policy =>
                 policy.RequireRole("ProductionOperator"));
 
-            options.AddPolicy("RequireProductionOperatorRoleOrQualitySupervisorRole", policy => 
+            options.AddPolicy("RequireProductionOperatorRoleOrQualitySupervisorRole", policy =>
                 policy.RequireRole("ProductionOperator", "QualitySupervisor"));
-            options.AddPolicy("RequireBusinessUnitLeaderRoleOrQualitySupervisorRole", policy => 
+            options.AddPolicy("RequireBusinessUnitLeaderRoleOrQualitySupervisorRole", policy =>
                 policy.RequireRole("BusinessUnitLeader", "QualitySupervisor"));
         });
 
-        services.AddScoped<TokenService>();
+        // Note: NO TokenService, NO JWT
+        // Next step will be adding Mongo-backed IUserStore/IUserRoleStore to persist users in Atlas.
+
         return services;
     }
 }
