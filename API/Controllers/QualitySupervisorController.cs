@@ -41,7 +41,7 @@ namespace API.Controllers
         }
 
         [HttpPut("updateProduction/{id}")]
-        public async Task<IActionResult> UpdateProduction(Guid id, int shift, int quantityProduced, DateTime date)
+        public async Task<IActionResult> UpdateProduction(string id, int shift, int quantityProduced, DateTime date)
         {
             var command = new UpdateProduction.Command
             {
@@ -54,7 +54,7 @@ namespace API.Controllers
         }
 
         [HttpPut("updateSale/{id}")]
-        public async Task<IActionResult> UpdateSale(Guid id, Guid tyreId, Guid clientId, int quantitySold, double pricePerUnit, DateTime saleDate)
+        public async Task<IActionResult> UpdateSale(string id, string tyreId, string clientId, int quantitySold, double pricePerUnit, DateTime saleDate)
         {
             var command = new UpdateSale.Command
             {
@@ -69,13 +69,13 @@ namespace API.Controllers
         }
 
         [HttpDelete("deleteProduction/{id}")]
-        public async Task<IActionResult> DeleteProduction(Guid id)
+        public async Task<IActionResult> DeleteProduction(string id)
         {
             return HandleResult(await Mediator.Send(new DeleteProduction.Command { Id = id }));
         }
 
         [HttpDelete("deleteSale/{id}")]
-        public async Task<IActionResult> DeleteSale(Guid id)
+        public async Task<IActionResult> DeleteSale(string id)
         {
             return HandleResult(await Mediator.Send(new DeleteSale.Command { Id = id }));
         }

@@ -21,7 +21,7 @@ public class TokenService
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, user.UserName),
+            new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),//ToString je trenutni fix samo da probam da pokrenem
             new Claim(ClaimTypes.Email, user.Email),
 

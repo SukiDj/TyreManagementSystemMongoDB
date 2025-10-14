@@ -6,7 +6,6 @@ using Application.Sales;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Persistence;
-using Persistence.Mongo.Repositories;
 using Infrastructure.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,10 +43,10 @@ namespace API.Extensions
                 return new MongoClient(settings);
             });
 
-            services.AddSingleton<IMongoDbContext, MongoDbContext>();
+            services.AddSingleton<MongoDbContext>();
 
             // ===== Repositories =====
-            services.AddScoped<ITyreRepository, TyreRepository>();
+            //services.AddScoped<ITyreRepository, TyreRepository>();
 
             // MediatR / AutoMapper / Validation
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Application.Tyres.List.Handler).Assembly));

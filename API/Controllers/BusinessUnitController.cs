@@ -32,13 +32,13 @@ namespace API.Controllers
         }
 
         [HttpGet("productionByMachine")]
-        public async Task<IActionResult> GetProductionByMachine(Guid machineId)
+        public async Task<IActionResult> GetProductionByMachine(string machineId)
         {
             return HandleResult(await Mediator.Send(new GetProductionByMachine.Query { MachineId = machineId }));
         }
 
         [HttpGet("productionByOperator")]
-        public async Task<IActionResult> GetProductionByOperator(Guid operatorId)
+        public async Task<IActionResult> GetProductionByOperator(string operatorId)
         {
             return HandleResult(await Mediator.Send(new GetProductionByOperator.Query { OperatorId = operatorId }));
         }

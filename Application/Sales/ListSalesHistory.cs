@@ -26,13 +26,13 @@ namespace Application.Sales
                 var salesHistory = sales.Select(s => new SaleDto
                 {
                     Id = s.Id,
-                    TyreCode = s.Tyre?.Id ?? Guid.Empty,
+                    TyreCode = s.Tyre?.Code ?? "",
                     QuantitySold = s.QuantitySold,
                     SaleDate = s.SaleDate,
-                    ClientId = s.Client?.Id ?? Guid.Empty,
+                    ClientId = s.Client?.Id ?? "",
                     TargetMarket = s.TargetMarket,
                     PricePerUnit = s.PricePerUnit,
-                    ProductionOrderId = s.Production?.Id ?? Guid.Empty
+                    ProductionOrderId = s.ProductionId
                 }).ToList();
 
                 return Result<List<SaleDto>>.Success(salesHistory);

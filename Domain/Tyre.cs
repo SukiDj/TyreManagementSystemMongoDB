@@ -7,9 +7,6 @@ namespace Domain
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
-
-        [BsonElement("code")]
         public string Code { get; set; }
 
         [BsonElement("name")]

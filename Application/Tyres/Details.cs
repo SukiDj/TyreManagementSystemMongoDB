@@ -25,7 +25,7 @@ namespace Application.Tyres
             public async Task<Result<Tyre>> Handle(Query request, CancellationToken cancellationToken)
             {
                 var tyre = await _context.Tyres
-                    .Find(t => t.Id == request.Id)
+                    .Find(t => t.Code == request.Id)
                     .FirstOrDefaultAsync(cancellationToken);
 
                 if (tyre == null)

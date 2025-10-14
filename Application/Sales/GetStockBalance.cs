@@ -34,12 +34,12 @@ namespace Application.Sales
 
                 var stockBalances = tyres.Select(t =>
                 {
-                    var produced = productions.Where(p => p.Tyre.Id == t.Id).Sum(p => p.QuantityProduced);
-                    var sold = sales.Where(s => s.Tyre.Id == t.Id).Sum(s => s.QuantitySold);
+                    var produced = productions.Where(p => p.Tyre.Code == t.Code).Sum(p => p.QuantityProduced);
+                    var sold = sales.Where(s => s.Tyre.Code == t.Code).Sum(s => s.QuantitySold);
 
                     return new StockBalanceDto
                     {
-                        TyreCode = t.Id.ToString(),
+                        TyreCode = t.Code.ToString(),
                         StockBalance = produced - sold
                     };
                 }).ToList();

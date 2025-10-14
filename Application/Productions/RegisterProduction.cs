@@ -44,29 +44,48 @@ namespace Application.Productions
 
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
-                var productionOperator = await _context.ProductionOperators
-                    .Find(x => x.UserName == _userAccessor.GetUsername())
+                // Pronađi korisnika (operatora)
+                var productionOperator = await _context.Users
+                    .Find(x => x.Username == _userAccessor.GetUsername())
                     .FirstOrDefaultAsync(cancellationToken);
 
                 if (productionOperator == null)
                     return Result<Unit>.Failure("Nije pronađen operater!");
 
+                // Pronađi mašinu
                 var machine = await _context.Machines
                     .Find(x => x.Id == request.MachineId)
                     .FirstOrDefaultAsync(cancellationToken);
 
+                if (machine == null)
+                    return Result<Unit>.Failure("Mašina nije pronađena!");
+
+                // Pronađi gumu (tyre)
                 var tyre = await _context.Tyres
-                    .Find(x => x.Id == request.TyreId)
+                    .Find(x => x.Code == request.TyreId)
                     .FirstOrDefaultAsync(cancellationToken);
 
-                if (tyre == null || machine == null)
-                    return Result<Unit>.Failure("Nisu pronađeni svi potrebni entiteti.");
+                if (tyre == null)
+                    return Result<Unit>.Failure("Guma nije pronađena!");
 
+                // Kreiraj proizvodnju (Production) sa info objektima
                 var production = new Production
                 {
-                    Tyre = tyre,
-                    Operator = productionOperator,
-                    Machine = machine,
+                    Tyre = new TyreInfo
+                    {
+                        Code = tyre.Code,
+                        Name = tyre.Name
+                    },
+                    Machine = new MachineInfo
+                    {
+                        Id = machine.Id,
+                        Name = machine.Name
+                    },
+                    Operator = new UserInfo
+                    {
+                        Id = productionOperator.Id,
+                        Name = $"{productionOperator.Ime} {productionOperator.Prezime}"
+                    },
                     Shift = request.Shift,
                     QuantityProduced = request.QuantityProduced,
                     ProductionDate = DateTime.UtcNow
@@ -75,7 +94,7 @@ namespace Application.Productions
                 await _context.Productions.InsertOneAsync(production, cancellationToken: cancellationToken);
 
                 await _actionLogger.LogActionAsync("RegisterProduction",
-                    $"Production registered for TyreId: {request.TyreId}, Operator: {productionOperator.UserName}");
+                    $"Production registered for TyreId: {request.TyreId}, Operator: {productionOperator.Username}");
 
                 return Result<Unit>.Success(Unit.Value);
             }

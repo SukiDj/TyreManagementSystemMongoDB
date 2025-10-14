@@ -21,7 +21,7 @@ public class BuggyController : BaseApiController
     [HttpGet("server-error")]
     public ActionResult GetServerError()
     {
-        throw new Exception("Kvo sad jebavas");
+        throw new Exception("Server error!");
     }
 
     [HttpGet("unauthorized")]

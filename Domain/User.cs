@@ -21,6 +21,9 @@ namespace Domain
         [BsonElement("prezime")]
         public string Prezime { get; set; }
 
+        [BsonElement("email")]
+        public string Email { get; set; }
+
         [BsonElement("telefon")]
         public string Telefon { get; set; }
 

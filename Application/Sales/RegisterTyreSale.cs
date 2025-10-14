@@ -28,7 +28,7 @@ namespace Application.Sales
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
                 var tyre = await _context.Tyres
-                    .Find(t => t.Id == request.Sale.TyreId)
+                    .Find(t => t.Code == request.Sale.TyreId)
                     .FirstOrDefaultAsync(cancellationToken);
 
                 if (tyre == null)
@@ -47,8 +47,16 @@ namespace Application.Sales
 
                 var sale = new Sale
                 {
-                    Tyre = tyre,
-                    Client = client,
+                    Tyre = new TyreInfo
+                    {
+                        Code = tyre.Code,
+                        Name = tyre.Name
+                    },
+                    Client = new ClientInfo
+                    {
+                        Id = client.Id,
+                        Name = client.Name
+                    },
                     SaleDate = request.Sale.SaleDate,
                     QuantitySold = request.Sale.QuantitySold,
                     PricePerUnit = request.Sale.PricePerUnit,
