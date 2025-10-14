@@ -18,7 +18,7 @@ builder.Services.AddControllers(opt =>
 });
 
 builder.Services.AddApplicationServices(builder.Configuration);
-builder.Services.AddIdentityServices(builder.Configuration);
+//builder.Services.AddIdentityServices(builder.Configuration);
 
 var app = builder.Build();
 
@@ -50,8 +50,8 @@ var services = scope.ServiceProvider;
 try
 {
     var context = services.GetRequiredService<MongoDbContext>();
-    var userManager = services.GetRequiredService<UserManager<User>>();
-    var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+    //var userManager = services.GetRequiredService<UserManager<User>>();
+    //var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
     // await context.Database.MigrateAsync();
     // await Seed.SeedData(context);
     // await Seed.SeedUsers(userManager, roleManager);
