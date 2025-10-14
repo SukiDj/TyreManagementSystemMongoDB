@@ -3,12 +3,16 @@ using Application.Core;
 using Application.Interfaces;
 using Application.Productions;
 using Application.Sales;
-using Application.Tyres;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Persistence.Mongo;
+using Persistence.Mongo.Repositories;
 using Infrastructure.Security;
-using Microsoft.EntityFrameworkCore;
-using Persistence;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+// NEW: Mongo
+using MongoDB.Driver;
 
 namespace API.Extensions
 {
@@ -16,26 +20,43 @@ namespace API.Extensions
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration config)
         {
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            // Swagger
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
-            services.AddDbContext<DataContext>(opt => 
-            {
-                opt.UseSqlite(config.GetConnectionString("DefaultConnection"));
-            });
 
-            services.AddCors(opt => {
+            // CORS
+            services.AddCors(opt =>
+            {
                 opt.AddPolicy("CorsPolicy", policy =>
                 {
                     policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000");
                 });
             });
 
+            // ===== Mongo wiring (replaces EF) =====
+            services.Configure<MongoOptions>(config.GetSection("Mongo"));
+
+            services.AddSingleton<IMongoClient>(sp =>
+            {
+                var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MongoOptions>>().Value;
+                var settings = MongoClientSettings.FromConnectionString(opts.ConnectionString);
+                settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+                return new MongoClient(settings);
+            });
+
+            services.AddSingleton<IMongoDbContext, MongoDbContext>();
+
+            // ===== Repositories =====
+            services.AddScoped<ITyreRepository, TyreRepository>();
+
+            // MediatR / AutoMapper / Validation
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Application.Tyres.List.Handler).Assembly));
             services.AddAutoMapper(typeof(MappingProfiles).Assembly);
             services.AddFluentValidationAutoValidation();
             services.AddValidatorsFromAssemblyContaining<RegisterProduction>();
             services.AddValidatorsFromAssemblyContaining<RegisterTyreSale>();
+
+            // Helpers
             services.AddHttpContextAccessor();
             services.AddScoped<IUserAccessor, UserAccessor>();
             services.AddScoped<ActionLogger>();
