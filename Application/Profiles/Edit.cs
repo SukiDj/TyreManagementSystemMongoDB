@@ -1,61 +1,62 @@
 using Application.Core;
 using Application.Interfaces;
+using Domain;
 using FluentValidation;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using Persistence;
 
-namespace Application.Profiles;
-
-public class Edit
+namespace Application.Profiles
 {
-    public class Command : IRequest<Result<Unit>>
+    public class Edit
     {
-        public string Ime { get; set; }
-        public string Prezime { get; set; }
-        public string Telefon { get; set; }
-        public DateTime DatumRodjenja { get; set; }
-        //public string SlikaProfila { get; set; }
-        //public string UserName { get; set; }
-    }
-
-    public class CommandValidator : AbstractValidator<Command>
-    {
-        public CommandValidator()
+        public class Command : IRequest<Result<Unit>>
         {
-            RuleFor(x => x.Ime).NotEmpty();
-            RuleFor(x => x.Prezime).NotEmpty();
-            RuleFor(x => x.Telefon).NotEmpty();
-            RuleFor(x => x.DatumRodjenja).NotEmpty();
-            //RuleFor(x => x.UserName).NotEmpty();
+            public string Ime { get; set; }
+            public string Prezime { get; set; }
+            public string Telefon { get; set; }
+            public DateTime DatumRodjenja { get; set; }
         }
-    }
 
-    public class Handler : IRequestHandler<Command, Result<Unit>>
-    {
-        private readonly DataContext _context;
-        private readonly IUserAccessor _userAccessor;
-        public Handler(DataContext context, IUserAccessor userAccessor)
+        public class CommandValidator : AbstractValidator<Command>
         {
-            _userAccessor = userAccessor;
-            _context = context;
+            public CommandValidator()
+            {
+                RuleFor(x => x.Ime).NotEmpty();
+                RuleFor(x => x.Prezime).NotEmpty();
+                RuleFor(x => x.Telefon).NotEmpty();
+                RuleFor(x => x.DatumRodjenja).NotEmpty();
+            }
         }
-        public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
+
+        public class Handler : IRequestHandler<Command, Result<Unit>>
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x =>
-                x.UserName == _userAccessor.GetUsername());
+            private readonly MongoDbContext _context;
+            private readonly IUserAccessor _userAccessor;
 
-            user.Ime = request.Ime ?? user.Ime;
-            user.Prezime = request.Prezime ?? user.Prezime;
-            user.Telefon = request.Telefon ?? user.Telefon;
-            //user.UserName = request.UserName ?? user.UserName;
-            user.DatumRodjenja = request.DatumRodjenja;
+            public Handler(MongoDbContext context, IUserAccessor userAccessor)
+            {
+                _context = context;
+                _userAccessor = userAccessor;
+            }
 
-            var success = await _context.SaveChangesAsync() > 0;
+            public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
+            {
+                var filter = Builders<User>.Filter.Eq(u => u.Username, _userAccessor.GetUsername());
+                var user = await _context.Users.Find(filter).FirstOrDefaultAsync(cancellationToken);
 
-            if (success) return Result<Unit>.Success(Unit.Value);
-            
-            return Result<Unit>.Failure("Problem updating profile");
+                if (user == null)
+                    return Result<Unit>.Failure("Korisnik nije pronađen.");
+
+                user.Ime = request.Ime ?? user.Ime;
+                user.Prezime = request.Prezime ?? user.Prezime;
+                user.Telefon = request.Telefon ?? user.Telefon;
+                user.DatumRodjenja = request.DatumRodjenja;
+
+                await _context.Users.ReplaceOneAsync(filter, user, cancellationToken: cancellationToken);
+
+                return Result<Unit>.Success(Unit.Value);
+            }
         }
     }
 }

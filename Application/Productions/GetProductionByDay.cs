@@ -1,6 +1,7 @@
 using Application.Core;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
+using Domain;
 using Persistence;
 
 namespace Application.Productions
@@ -14,30 +15,36 @@ namespace Application.Productions
 
         public class Handler : IRequestHandler<Query, Result<List<ProductionDto>>>
         {
-            private readonly DataContext _context;
+            private readonly MongoDbContext _context;
 
-            public Handler(DataContext context)
+            public Handler(MongoDbContext context)
             {
                 _context = context;
             }
 
             public async Task<Result<List<ProductionDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
-                var productions = await _context.Productions
-                    .Where(p => p.ProductionDate.Day == request.Date.Day && p.ProductionDate.Month == request.Date.Month && p.ProductionDate.Year == request.Date.Year)
-                    .Select(p => new ProductionDto
-                    {
-                        Id = p.Id,
-                        TyreCode = p.Tyre.Code.ToString(),
-                        Shift = p.Shift,
-                        QuantityProduced = p.QuantityProduced,
-                        MachineNumber = p.Machine.Id.ToString(),
-                        ProductionDate = p.ProductionDate,
-                        OperatorId = p.Operator.Id.ToString()
-                    })
-                    .ToListAsync(cancellationToken);
+                // filter productions by date (compare date parts)
+                var start = request.Date.Date;
+                var end = start.AddDays(1);
 
-                return Result<List<ProductionDto>>.Success(productions);
+                var filter = Builders<Production>.Filter.Gte(p => p.ProductionDate, start) &
+                             Builders<Production>.Filter.Lt(p => p.ProductionDate, end);
+
+                var productions = await _context.Productions.Find(filter).ToListAsync(cancellationToken);
+
+                var result = productions.Select(p => new ProductionDto
+                {
+                    Id = p.Id,
+                    TyreCode = p.Tyre?.Code,
+                    Shift = p.Shift,
+                    QuantityProduced = p.QuantityProduced,
+                    MachineNumber = p.Machine?.Id,
+                    ProductionDate = p.ProductionDate,
+                    OperatorId = p.Operator?.Id
+                }).ToList();
+
+                return Result<List<ProductionDto>>.Success(result);
             }
         }
     }

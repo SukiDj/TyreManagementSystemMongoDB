@@ -1,6 +1,7 @@
 using Application.Core;
 using Domain;
 using MediatR;
+using MongoDB.Driver;
 using Persistence;
 
 namespace Application.Tyres
@@ -9,20 +10,27 @@ namespace Application.Tyres
     {
         public class Query : IRequest<Result<Tyre>>
         {
-            public Guid Id { get; set; }
+            public string Id { get; set; }
         }
 
         public class Handler : IRequestHandler<Query, Result<Tyre>>
         {
-            private readonly DataContext _context;
-            public Handler(DataContext context)
+            private readonly MongoDbContext _context;
+
+            public Handler(MongoDbContext context)
             {
                 _context = context;
             }
 
             public async Task<Result<Tyre>> Handle(Query request, CancellationToken cancellationToken)
             {
-                var tyre = await _context.Tyres.FindAsync(request.Id);
+                var tyre = await _context.Tyres
+                    .Find(t => t.Id == request.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (tyre == null)
+                    return Result<Tyre>.Failure("Tyre not found");
+
                 return Result<Tyre>.Success(tyre);
             }
         }

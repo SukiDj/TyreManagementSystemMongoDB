@@ -2,7 +2,7 @@ using Application.Actions;
 using Application.Core;
 using Domain;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using Persistence;
 
 namespace Application.Sales
@@ -16,10 +16,10 @@ namespace Application.Sales
 
         public class Handler : IRequestHandler<Command, Result<Unit>>
         {
-            private readonly DataContext _context;
+            private readonly MongoDbContext _context;
             private readonly ActionLogger _actionLogger;
 
-            public Handler(DataContext context, ActionLogger actionLogger)
+            public Handler(MongoDbContext context, ActionLogger actionLogger)
             {
                 _context = context;
                 _actionLogger = actionLogger;
@@ -27,19 +27,23 @@ namespace Application.Sales
 
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
-                var tyre = await _context.Tyres.FirstOrDefaultAsync(t => t.Code == request.Sale.TyreId);
+                var tyre = await _context.Tyres
+                    .Find(t => t.Id == request.Sale.TyreId)
+                    .FirstOrDefaultAsync(cancellationToken);
 
                 if (tyre == null)
-                {
-                    return Result<Unit>.Failure("Invalid references for Tyre");
-                }
+                    return Result<Unit>.Failure("Invalid Tyre reference");
 
-                var client = await _context.Clients.FindAsync(request.Sale.ClientId);
+                var client = await _context.Clients
+                    .Find(c => c.Id == request.Sale.ClientId)
+                    .FirstOrDefaultAsync(cancellationToken);
 
                 if (client == null)
-                {
-                    return Result<Unit>.Failure("Invalid references for Client");
-                }
+                    return Result<Unit>.Failure("Invalid Client reference");
+
+                var production = await _context.Productions
+                    .Find(p => p.Id == request.Sale.ProductionOrderId)
+                    .FirstOrDefaultAsync(cancellationToken);
 
                 var sale = new Sale
                 {
@@ -50,21 +54,15 @@ namespace Application.Sales
                     PricePerUnit = request.Sale.PricePerUnit,
                     UnitOfMeasure = request.Sale.UnitOfMeasure,
                     TargetMarket = request.Sale.TargetMarket,
-                    Production = await _context.Productions.FindAsync(request.Sale.ProductionOrderId)
+                    ProductionId = production.Id
                 };
 
-                if (sale.Tyre == null || sale.Client == null)
-                {
-                    return Result<Unit>.Failure("Invalid references for Tyre or Client");
-                }
+                await _context.Sales.InsertOneAsync(sale, cancellationToken: cancellationToken);
 
-                _context.Sales.Add(sale);
-
-                var result = await _context.SaveChangesAsync() > 0;
-
-                if (!result) return Result<Unit>.Failure("Failed to register sale");
-
-                await _actionLogger.LogActionAsync("RegisterSale", $"Sale registered for TyreId: {request.Sale.TyreId}, ClientId: {request.Sale.ClientId}");
+                await _actionLogger.LogActionAsync(
+                    "RegisterSale",
+                    $"Sale registered for TyreId: {request.Sale.TyreId}, ClientId: {request.Sale.ClientId}"
+                );
 
                 return Result<Unit>.Success(Unit.Value);
             }

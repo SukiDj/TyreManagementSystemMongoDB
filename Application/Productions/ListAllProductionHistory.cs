@@ -1,38 +1,38 @@
 using Application.Core;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
+using Domain;
 using Persistence;
 
 namespace Application.Productions
 {
     public class ListAllProductionHistory
     {
-        public class Query : IRequest<Result<List<ProductionDto>>>
-        {
-        }
+        public class Query : IRequest<Result<List<ProductionDto>>> { }
 
         public class Handler : IRequestHandler<Query, Result<List<ProductionDto>>>
         {
-            private readonly DataContext _context;
-            public Handler(DataContext context)
+            private readonly MongoDbContext _context;
+
+            public Handler(MongoDbContext context)
             {
                 _context = context;
             }
 
             public async Task<Result<List<ProductionDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
-                var history = await _context.Productions
-                    .Select(p => new ProductionDto
-                    {
-                        Id = p.Id,
-                        TyreCode = p.Tyre.Code.ToString(),
-                        QuantityProduced = p.QuantityProduced,
-                        ProductionDate = p.ProductionDate,
-                        Shift = p.Shift,
-                        MachineNumber = p.Machine.Id.ToString(),
-                        OperatorId = p.Operator.Id.ToString()
-                    })
-                    .ToListAsync();
+                var productions = await _context.Productions.Find(_ => true).ToListAsync(cancellationToken);
+
+                var history = productions.Select(p => new ProductionDto
+                {
+                    Id = p.Id,
+                    TyreCode = p.Tyre?.Code,
+                    QuantityProduced = p.QuantityProduced,
+                    ProductionDate = p.ProductionDate,
+                    Shift = p.Shift,
+                    MachineNumber = p.Machine?.Id,
+                    OperatorId = p.Operator?.Id
+                }).ToList();
 
                 return Result<List<ProductionDto>>.Success(history);
             }

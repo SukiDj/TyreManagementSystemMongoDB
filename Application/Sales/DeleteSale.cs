@@ -1,6 +1,7 @@
 using Application.Actions;
 using Application.Core;
 using MediatR;
+using MongoDB.Driver;
 using Persistence;
 
 namespace Application.Sales
@@ -9,15 +10,15 @@ namespace Application.Sales
     {
         public class Command : IRequest<Result<Unit>>
         {
-            public Guid Id { get; set; }
+            public string Id { get; set; }
         }
 
         public class Handler : IRequestHandler<Command, Result<Unit>>
         {
-            private readonly DataContext _context;
+            private readonly MongoDbContext _context;
             private readonly ActionLogger _actionLogger;
 
-            public Handler(DataContext context, ActionLogger actionLogger)
+            public Handler(MongoDbContext context, ActionLogger actionLogger)
             {
                 _context = context;
                 _actionLogger = actionLogger;
@@ -25,19 +26,12 @@ namespace Application.Sales
 
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
-                var sale = await _context.Sales.FindAsync(request.Id);
+                var result = await _context.Sales.DeleteOneAsync(s => s.Id == request.Id, cancellationToken);
 
-                if (sale == null) return null;
+                if (result.DeletedCount == 0)
+                    return Result<Unit>.Failure("Sale not found or already deleted");
 
-                var saleId = sale.Id;
-
-                _context.Sales.Remove(sale);
-
-                var result = await _context.SaveChangesAsync() > 0;
-
-                if (!result) return Result<Unit>.Failure("Failed to delete sale");
-
-                await _actionLogger.LogActionAsync("DeleteSale", $"Sale deleted - SaleId: {saleId}");
+                await _actionLogger.LogActionAsync("DeleteSale", $"Sale deleted - Id: {request.Id}");
 
                 return Result<Unit>.Success(Unit.Value);
             }

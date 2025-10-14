@@ -1,15 +1,16 @@
 using Domain;
 using Microsoft.AspNetCore.Http;
+using MongoDB.Bson;
 using Persistence;
 
 namespace Application.Actions
 {
     public class ActionLogger
     {
-        private readonly DataContext _context;
+        private readonly MongoDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ActionLogger(DataContext context, IHttpContextAccessor httpContextAccessor)
+        public ActionLogger(MongoDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
@@ -21,15 +22,14 @@ namespace Application.Actions
 
             var log = new ActionLog
             {
-                Id = Guid.NewGuid(),
+                Id = ObjectId.GenerateNewId().ToString(),
                 ActionName = actionName,
                 UserId = userId,
                 Timestamp = DateTime.UtcNow,
                 Details = details
             };
 
-            _context.ActionLogs.Add(log);
-            await _context.SaveChangesAsync();
+            await _context.ActionLogs.InsertOneAsync(log);
         }
     }
 }

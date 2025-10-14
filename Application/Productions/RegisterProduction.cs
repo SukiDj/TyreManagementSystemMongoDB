@@ -4,7 +4,7 @@ using Application.Interfaces;
 using Domain;
 using FluentValidation;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using Persistence;
 
 namespace Application.Productions
@@ -13,8 +13,8 @@ namespace Application.Productions
     {
         public class Command : IRequest<Result<Unit>>
         {
-            public Guid TyreId { get; set; }
-            public Guid MachineId { get; set; }
+            public string TyreId { get; set; }
+            public string MachineId { get; set; }
             public int Shift { get; set; }
             public int QuantityProduced { get; set; }
         }
@@ -23,15 +23,19 @@ namespace Application.Productions
         {
             public CommandValidator()
             {
+                RuleFor(x => x.TyreId).NotEmpty();
+                RuleFor(x => x.MachineId).NotEmpty();
+                RuleFor(x => x.QuantityProduced).GreaterThan(0);
             }
         }
 
         public class Handler : IRequestHandler<Command, Result<Unit>>
         {
-            private readonly DataContext _context;
+            private readonly MongoDbContext _context;
             private readonly IUserAccessor _userAccessor;
             private readonly ActionLogger _actionLogger;
-            public Handler(DataContext context, IUserAccessor userAccessor, ActionLogger actionLogger)
+
+            public Handler(MongoDbContext context, IUserAccessor userAccessor, ActionLogger actionLogger)
             {
                 _context = context;
                 _userAccessor = userAccessor;
@@ -40,38 +44,38 @@ namespace Application.Productions
 
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
-                var productionOperator = _context.ProductionOperators.FirstOrDefault(x => 
-                    x.UserName == _userAccessor.GetUsername());
+                var productionOperator = await _context.ProductionOperators
+                    .Find(x => x.UserName == _userAccessor.GetUsername())
+                    .FirstOrDefaultAsync(cancellationToken);
 
-                if(productionOperator ==null) return Result<Unit>.Failure("Nije pronadjen operater!");
+                if (productionOperator == null)
+                    return Result<Unit>.Failure("Nije pronađen operater!");
 
-                var machine = await _context.Machines.FindAsync(request.MachineId);
-                
-                var tyre = await _context.Tyres.FirstOrDefaultAsync(t => t.Code == request.TyreId);
+                var machine = await _context.Machines
+                    .Find(x => x.Id == request.MachineId)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                var tyre = await _context.Tyres
+                    .Find(x => x.Id == request.TyreId)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (tyre == null || machine == null)
+                    return Result<Unit>.Failure("Nisu pronađeni svi potrebni entiteti.");
 
                 var production = new Production
                 {
                     Tyre = tyre,
                     Operator = productionOperator,
-                    //Supervisor = supervisor,
                     Machine = machine,
                     Shift = request.Shift,
                     QuantityProduced = request.QuantityProduced,
                     ProductionDate = DateTime.UtcNow
                 };
 
-                if (production.Tyre == null || production.Operator == null || production.Machine == null)
-                {
-                    return Result<Unit>.Failure("Invalid references for Tyre, Operator, or Machine");
-                }
+                await _context.Productions.InsertOneAsync(production, cancellationToken: cancellationToken);
 
-                _context.Productions.Add(production);
-
-                var result = await _context.SaveChangesAsync() > 0;
-
-                if (!result) return Result<Unit>.Failure("Failed to register production");
-
-                await _actionLogger.LogActionAsync("RegisterProduction", $"Production registered for TyreId: {request.TyreId}, OperatorId: {productionOperator}");
+                await _actionLogger.LogActionAsync("RegisterProduction",
+                    $"Production registered for TyreId: {request.TyreId}, Operator: {productionOperator.UserName}");
 
                 return Result<Unit>.Success(Unit.Value);
             }

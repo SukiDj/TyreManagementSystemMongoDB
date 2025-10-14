@@ -1,6 +1,7 @@
 using Application.Core;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
+using Domain;
 using Persistence;
 
 namespace Application.Productions
@@ -9,35 +10,35 @@ namespace Application.Productions
     {
         public class Query : IRequest<Result<List<ProductionDto>>>
         {
-            public Guid MachineId { get; set; }
+            public string MachineId { get; set; }
         }
 
         public class Handler : IRequestHandler<Query, Result<List<ProductionDto>>>
         {
-            private readonly DataContext _context;
+            private readonly MongoDbContext _context;
 
-            public Handler(DataContext context)
+            public Handler(MongoDbContext context)
             {
                 _context = context;
             }
 
             public async Task<Result<List<ProductionDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
-                var productions = await _context.Productions
-                    .Where(p => p.Machine.Id == request.MachineId)
-                    .Select(p => new ProductionDto
-                    {
-                        Id = p.Id,
-                        TyreCode = p.Tyre.Code.ToString(),
-                        Shift = p.Shift,
-                        QuantityProduced = p.QuantityProduced,
-                        MachineNumber = p.Machine.Id.ToString(),
-                        ProductionDate = p.ProductionDate,
-                        OperatorId = p.Operator.Id.ToString()
-                    })
-                    .ToListAsync(cancellationToken);
+                var filter = Builders<Production>.Filter.Eq(p => p.Machine.Id, request.MachineId);
+                var productions = await _context.Productions.Find(filter).ToListAsync(cancellationToken);
 
-                return Result<List<ProductionDto>>.Success(productions);
+                var result = productions.Select(p => new ProductionDto
+                {
+                    Id = p.Id,
+                    TyreCode = p.Tyre?.Code,
+                    Shift = p.Shift,
+                    QuantityProduced = p.QuantityProduced,
+                    MachineNumber = p.Machine?.Id,
+                    ProductionDate = p.ProductionDate,
+                    OperatorId = p.Operator?.Id
+                }).ToList();
+
+                return Result<List<ProductionDto>>.Success(result);
             }
         }
     }

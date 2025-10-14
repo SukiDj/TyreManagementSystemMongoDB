@@ -1,6 +1,8 @@
 using Application.Actions;
 using Application.Core;
 using MediatR;
+using MongoDB.Driver;
+using Domain;
 using Persistence;
 
 namespace Application.Productions
@@ -9,15 +11,15 @@ namespace Application.Productions
     {
         public class Command : IRequest<Result<Unit>>
         {
-            public Guid Id { get; set; }
+            public string Id { get; set; }
         }
 
         public class Handler : IRequestHandler<Command, Result<Unit>>
         {
-            private readonly DataContext _context;
+            private readonly MongoDbContext _context;
             private readonly ActionLogger _actionLogger;
 
-            public Handler(DataContext context, ActionLogger actionLogger)
+            public Handler(MongoDbContext context, ActionLogger actionLogger)
             {
                 _context = context;
                 _actionLogger = actionLogger;
@@ -25,17 +27,16 @@ namespace Application.Productions
 
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
-                var production = await _context.Productions.FindAsync(request.Id);
+                var production = await _context.Productions.Find(p => p.Id == request.Id).FirstOrDefaultAsync(cancellationToken);
 
-                if (production == null) return null;
+                if (production == null) return Result<Unit>.Failure("Production not found");
 
                 var productionId = production.Id;
 
-                _context.Productions.Remove(production);
+                var deleteResult = await _context.Productions.DeleteOneAsync(p => p.Id == request.Id, cancellationToken);
 
-                var result = await _context.SaveChangesAsync() > 0;
-
-                if (!result) return Result<Unit>.Failure("Failed to delete production");
+                if (deleteResult.DeletedCount == 0)
+                    return Result<Unit>.Failure("Failed to delete production");
 
                 await _actionLogger.LogActionAsync("DeleteProduction", $"Production deleted - ProductionId: {productionId}");
 
