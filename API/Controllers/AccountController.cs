@@ -5,7 +5,6 @@ using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
-using BCrypt.Net;
 using Persistence;
 
 namespace API.Controllers;

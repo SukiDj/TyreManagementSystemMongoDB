@@ -32,7 +32,7 @@ namespace Persistence
             ActionLogs = _database.GetCollection<ActionLog>("ActionLogs");
 
             // Opcionalno: Kreiranje indeksa (npr. po UserName ili Email)
-            CreateIndexes();
+            //CreateIndexes();
         }
 
         private void CreateIndexes()
