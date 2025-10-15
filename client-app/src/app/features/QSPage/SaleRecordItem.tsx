@@ -1,6 +1,5 @@
 import { Button, Form, Icon, Item, Segment } from "semantic-ui-react";
 import { SaleRecord, SaleRecordFromValues } from "../../models/SaleRecord";
-import { Link } from "react-router-dom";
 import { observer } from "mobx-react-lite";
 import { useStore } from "../../stores/store"; // Uvoz store-a
 import { useState } from "react";

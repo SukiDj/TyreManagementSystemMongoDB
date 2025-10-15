@@ -2,6 +2,7 @@ using Application.Actions;
 using Application.Core;
 using Domain;
 using MediatR;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Persistence;
 
@@ -32,7 +33,7 @@ namespace Application.Sales
                     .FirstOrDefaultAsync(cancellationToken);
 
                 if (tyre == null)
-                    return Result<Unit>.Failure("Invalid Tyre reference");
+                    return Result<Unit>.Failure(request.Sale.ToJson());
 
                 var client = await _context.Clients
                     .Find(c => c.Id == request.Sale.ClientId)
