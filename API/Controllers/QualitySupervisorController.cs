@@ -10,9 +10,23 @@ namespace API.Controllers
     public class QualitySupervisorController : BaseApiController
     {
         [HttpPost("registerTyreSale")]
-        public async Task<IActionResult> RegisterTyreSale([FromForm]RegisterTyreSaleDto sale)
+        public async Task<IActionResult> RegisterTyreSale(RegisterTyreSaleDto sale)
         {
-            return HandleResult(await Mediator.Send(new RegisterTyreSale.Command{ Sale = sale}));
+            RegisterTyreSaleDto dto = new RegisterTyreSaleDto
+            {
+                TyreId = "68eecb6d1a19272260eb3c58",
+                ClientId = "68eecb6d1a19272260eb3c5b",
+                PricePerUnit = 100,
+                QuantitySold = 20,
+                SaleDate = sale.SaleDate,
+                UnitOfMeasure = "kom",
+                ProductionOrderId = "68eed719f84e2a41ce5b04bb"
+            };
+            var command = new RegisterTyreSale.Command
+            {
+                Sale = sale
+            };
+            return HandleResult(await Mediator.Send(command));
         }
 
         [HttpGet("submissionHistory")]
