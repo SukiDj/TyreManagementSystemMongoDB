@@ -7,8 +7,6 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Persistence;
 using Infrastructure.Security;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 // NEW: Mongo
 using MongoDB.Driver;

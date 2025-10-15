@@ -1,9 +1,3 @@
-using Domain;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace API.Extensions;
 
 public static class IdentityServiceExtensions

@@ -1,8 +1,6 @@
 using Application.Core;
 using AutoMapper;
-using Domain;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using Persistence;
 
