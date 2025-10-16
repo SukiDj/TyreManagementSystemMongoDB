@@ -22,10 +22,9 @@ public class TokenService
         {
             new Claim(ClaimTypes.Name, user.Username ?? string.Empty),
             new Claim(ClaimTypes.NameIdentifier, user.Id ?? string.Empty),
-            new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+            new Claim(ClaimTypes.Email, user.Email ?? string.Empty)
         };
 
-        // If you store a single role as 'Role'
         if (!string.IsNullOrWhiteSpace(user.Role))
             claims.Add(new Claim(ClaimTypes.Role, user.Role));
 

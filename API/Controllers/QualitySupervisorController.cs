@@ -12,16 +12,6 @@ namespace API.Controllers
         [HttpPost("registerTyreSale")]
         public async Task<IActionResult> RegisterTyreSale(RegisterTyreSaleDto sale)
         {
-            RegisterTyreSaleDto dto = new RegisterTyreSaleDto
-            {
-                TyreId = "68eecb6d1a19272260eb3c58",
-                ClientId = "68eecb6d1a19272260eb3c5b",
-                PricePerUnit = 100,
-                QuantitySold = 20,
-                SaleDate = sale.SaleDate,
-                UnitOfMeasure = "kom",
-                ProductionOrderId = "68eed719f84e2a41ce5b04bb"
-            };
             var command = new RegisterTyreSale.Command
             {
                 Sale = sale

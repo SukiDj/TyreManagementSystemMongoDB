@@ -40,7 +40,7 @@ public class AccountController : ControllerBase
     public IActionResult Logout()
     {
         // MongoDB nema session, logout samo brise cookie
-        Response.Cookies.Delete("refreshToken");
+        //Response.Cookies.Delete("refreshToken");
         return Ok("Logout successful");
     }
 
@@ -116,20 +116,24 @@ public class AccountController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("refreshToken")]
-    public async Task<ActionResult<UserDto>> RefreshToken()
-    {
-        var refreshTokenValue = Request.Cookies["refreshToken"];
-        var username = User.FindFirstValue(ClaimTypes.Name);
-        var user = await _context.Users.Find(u => u.Username == username).FirstOrDefaultAsync();
+[HttpPost("refreshToken")]
+public async Task<ActionResult<UserDto>> RefreshToken()
+{
+    var refreshTokenValue = Request.Cookies["refreshToken"];
+    var username = User.FindFirstValue(ClaimTypes.Name);
 
-        if (user == null) return Unauthorized();
+    var user = await _context.Users
+        .Find(u => u.Username == username)
+        .FirstOrDefaultAsync();
 
-        var oldToken = user.RefreshTokens.SingleOrDefault(x => x.Token == refreshTokenValue);
-        if (oldToken == null || !oldToken.IsActive) return Unauthorized();
+    if (user == null) return Unauthorized();
 
-        return await CreateUserObject(user);
-    }
+    var oldToken = user.RefreshTokens.SingleOrDefault(rt => rt.Token == refreshTokenValue);
+    if (oldToken == null || !oldToken.IsActive) return Unauthorized();
+
+    return await CreateUserObject(user);
+}
+        
 
     private async Task<UserDto> CreateUserObject(User user)
     {
@@ -138,23 +142,26 @@ public class AccountController : ControllerBase
             Ime = user.Ime,
             Prezime = user.Prezime,
             Token = await _tokenService.CreateToken(user),
-            UserName = user.Username
+            UserName = user.Username,
+            Role = user.Role
         };
     }
 
     private async Task SetRefreshToken(User user)
+{
+    var refreshToken = _tokenService.GenerateRefreshToken();
+    user.RefreshTokens.Add(refreshToken);
+
+    var filter = Builders<User>.Filter.Eq(u => u.Id, user.Id);
+    await _context.Users.ReplaceOneAsync(filter, user);
+
+    var cookieOptions = new CookieOptions
     {
-        var refreshToken = _tokenService.GenerateRefreshToken();
-        user.RefreshTokens.Add(refreshToken);
+        HttpOnly = true,
+        Expires = refreshToken.Expires
+    };
 
-        var filter = Builders<User>.Filter.Eq(u => u.Id, user.Id);
-        await _context.Users.ReplaceOneAsync(filter, user);
+    Response.Cookies.Append("refreshToken", refreshToken.Token, cookieOptions);
+}
 
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Expires = DateTime.UtcNow.AddDays(7)
-        };
-        Response.Cookies.Append("refreshToken", refreshToken.Token, cookieOptions);
-    }
 }
