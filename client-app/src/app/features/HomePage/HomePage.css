@@ -1,29 +1,101 @@
-.background {
-    background-image: url("../../../assets/Images/TigarTyres.jpg");
-    background-size: cover;
-    background-position: center;
-    height: 100vh; 
-    width: 100vw; 
-    display: flex; 
-    justify-content: center;
-    align-items: center; 
-    position: relative;
-  }
-  
-  .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5); 
-  }
-  
-  .form-container {
-    z-index: 1; 
-    background-color: rgba(255, 255, 255, 0.8); 
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-    min-width: 300px;
-  }
+:root{
+  /* match your navbar gradient blues */
+  --brand-1: #1e3a8a; /* deep */
+  --brand-2: #2563eb; /* main */
+  --brand-3: #38bdf8; /* accent */
+  --nav-h: 56px;
+
+  --bg-1: #f4f6f8;
+  --bg-2: #eef2f6;
+  --stroke: rgba(17,24,39,.06);
+  --ink: #111827;
+  --muted: #6b7280;
+}
+
+/* Fill the viewport under the fixed navbar; no vertical scroll here */
+.auth-viewport{
+  height: calc(100svh - var(--nav-h));
+  padding: 1.25rem;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(900px 500px at 10% -20%, var(--bg-2), transparent 60%),
+    radial-gradient(900px 500px at 120% 10%, var(--bg-2), transparent 60%),
+    linear-gradient(180deg, var(--bg-1), #ffffff);
+  overflow: hidden; /* removes the scroll on the landing */
+}
+
+/* Card */
+.auth-card{
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.08);
+  overflow: hidden;
+}
+
+/* Brand header */
+.brand{
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 20px 10px;
+  border-bottom: 1px solid var(--stroke);
+}
+.brand-icon{
+  width: 42px; height: 42px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--brand-1), var(--brand-2));
+  color: #fff; font-size: 18px;
+}
+.brand-text h1{ margin: 0; font-size: 18px; color: var(--ink); letter-spacing: .2px; }
+.brand-text p{ margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+
+/* Tabs */
+.auth-tabs{
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  padding: 12px 12px 0;
+}
+.tab{
+  appearance: none;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+  padding: 10px 0;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, box-shadow .15s ease, color .15s ease;
+}
+.tab:hover{ background: #f3f4f6; }
+.tab.active{
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--brand-2), var(--brand-3));
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
+}
+
+/* Body & footer */
+.auth-body{ padding: 16px 18px 8px; }
+.auth-footer{ padding: 8px 18px 18px; }
+.auth-footer .link{
+  appearance: none; background: transparent; border: none;
+  color: var(--brand-2); font-weight: 600; cursor: pointer; padding: 0;
+}
+.auth-footer .link:hover{ text-decoration: underline; }
+
+/* Make Semantic UI inputs/buttons harmonize inside the card */
+.auth-card .ui.input > input,
+.auth-card .ui.selection.dropdown{
+  border-radius: 10px !important;
+  border-color: #e5e7eb !important;
+}
+/* Buttons in your Login/Register forms: use primary to get navbar-blue */
+.auth-card .ui.button.primary,
+.auth-card .ui.primary.buttons .button{
+  background: var(--brand-2) !important;
+}
+.auth-card .ui.button.primary:hover{
+  background: #1d4ed8 !important; /* slightly darker hover */
+}
+.auth-viewport { margin-top: 0 !important; }

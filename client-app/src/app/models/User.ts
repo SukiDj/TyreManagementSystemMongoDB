@@ -4,16 +4,8 @@ export interface User{
     telefon:string;
     datumRodjenja:Date;
     token:string;
-    roles : Role;
+    role : string;
     userName:string;
-}
-
-export interface Role {
-    korisnikRoles: any;
-    id: string;
-    name: string;
-    normalizedName: string;
-    concurrencyStamp: any;
 }
 
 export interface RegisterUserFormValues {

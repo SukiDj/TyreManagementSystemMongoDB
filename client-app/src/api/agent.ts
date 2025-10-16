@@ -87,6 +87,7 @@ axios.interceptors.response.use(async response =>{
     return Promise.reject(error);
 })
 
+
 const responseBody = <T>(response: AxiosResponse<T>) => response.data;
 
 const requests = {
@@ -142,6 +143,7 @@ const Records = {
 }
 
 const Account = {
+    current: () => requests.get<User>('/Account'),
     login: (user:UserFormValues) => requests.post<User>('/Account/login', user),
     refreshToken: () => requests.post<User>('/Account/refreshToken/', {}),
     register: (user: RegisterUserFormValues) => requests.post<User>('/Account/register', user)

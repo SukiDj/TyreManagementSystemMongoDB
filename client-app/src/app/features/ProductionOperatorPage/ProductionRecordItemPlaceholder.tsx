@@ -1,14 +1,31 @@
-import { PlaceholderLine, Placeholder } from 'semantic-ui-react'
+import { Header, Segment } from 'semantic-ui-react';
+import { useStore } from '../../stores/store';
+import { observer } from 'mobx-react-lite';
+import ProductionRecordItem from './ProductionRecordItem';
+import { Fragment } from 'react/jsx-runtime';
 
-const PlaceholderExampleLineLength = () => (
-  <Placeholder>
-    <PlaceholderLine length='full' />
-    <PlaceholderLine length='very long' />
-    <PlaceholderLine length='long' />
-    <PlaceholderLine length='medium' />
-    <PlaceholderLine length='short' />
-    <PlaceholderLine length='very short' />
-  </Placeholder>
-)
+export default observer(function ProductionList() {
+  const { recordStore } = useStore();
+  const { groupedRecords } = recordStore;
 
-export default PlaceholderExampleLineLength
+  if (groupedRecords.length === 0) {
+    return (
+      <Segment basic secondary textAlign="center" content="No records yet." />
+    );
+  }
+
+  return (
+    <>
+      {groupedRecords.map(([group, records]) => (
+        <Fragment key={group}>
+          <Header sub color="grey" style={{ marginTop: '1rem' }}>
+            {group}
+          </Header>
+          {records.map((record) => (
+            <ProductionRecordItem key={record.id} record={record} />
+          ))}
+        </Fragment>
+      ))}
+    </>
+  );
+});

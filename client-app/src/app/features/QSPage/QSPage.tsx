@@ -1,11 +1,9 @@
-import { Grid, Loader, Form, Dropdown, Button, Segment } from 'semantic-ui-react';
-import SaleList from './SaleRecordList';
 import { observer } from 'mobx-react-lite';
+import { useEffect, useState } from 'react';
+import { Button, Card, Divider, Dropdown, Form, Grid, Header, Icon, Loader, Segment } from 'semantic-ui-react';
+import InfiniteScroll from 'react-infinite-scroller';
 import { useStore } from '../../stores/store';
 import { PagingParams } from '../../models/Pagination';
-import InfiniteScroll from 'react-infinite-scroller';
-import SaleListItemPlaceholder from './SaleRecordItemPlaceholder';
-import { useEffect, useState } from 'react';
 import SaleRecordItemPlaceholder from './SaleRecordItemPlaceholder';
 import SaleRecordList from './SaleRecordList';
 import ProductionRecordItemPlaceholder from '../ProductionOperatorPage/ProductionRecordItemPlaceholder';
@@ -13,7 +11,9 @@ import ProductionRedordList from '../ProductionOperatorPage/ProductionRedordList
 import { ActionLog } from '../../models/ActionLog';
 import ActionLogList from './ActionLogList';
 
-export default observer(function SaleDashboard() {
+export default observer(function QSPage() {
+  const { userStore } = useStore();
+  const user = userStore.user;
   const {
     saleRecordStore: {
       setPagingParams,
@@ -27,51 +27,44 @@ export default observer(function SaleDashboard() {
     },
     tyreStore,
     clientStore,
-    userStore: { user }, // Uvoz funkcije za logove
-    logStore: { loadLogs },
-    recordStore: {
-      loadAllProductionRecords,
-    },
+    recordStore: { loadAllProductionRecords },
+    logStore: { loadLogs }
   } = useStore();
 
-  const [showSales, setShowSales] = useState(true); // Prikaz prodajnih zapisa ili proizvodnih
-  const [showProductions, setShowProductions] = useState(false);
-  const [logs, setLogs] = useState<ActionLog[]>([]); // Stanje za logove akcija
+  const [view, setView] = useState<'sales' | 'productions' | 'logs'>('sales');
+  const [logs, setLogs] = useState<ActionLog[]>([]);
 
-  // Učitavanje osnovnih podataka prilikom mount-a komponente
   useEffect(() => {
-    setPagingParams(new PagingParams(0)); 
-    loadAllProductionRecords(); 
-    loadSaleRecords(); 
+    setPagingParams(new PagingParams(0));
+    loadAllProductionRecords();
+    loadSaleRecords();
     if (tyreStore.tyreRegistry.size === 0) tyreStore.loadTyres();
     if (clientStore.clientRegistry.size === 0) clientStore.loadClients();
   }, [loadSaleRecords, setPagingParams, tyreStore, clientStore, loadAllProductionRecords]);
 
-  function handleGetNext() {
+  const handleGetNextSales = () => {
     setLoadingNext(true);
     setPagingParams(new PagingParams(pagination!.currentPage + 1));
     loadSaleRecords().then(() => setLoadingNext(false));
-  }
+  };
 
-  function handleGetNextProd() {
+  const handleGetNextProd = () => {
     setLoadingNext(true);
     setPagingParams(new PagingParams(pagination!.currentPage + 1));
     loadAllProductionRecords().then(() => setLoadingNext(false));
-  }
+  };
 
-  // Funkcija za učitavanje logova akcija
   const handleShowLogs = async () => {
+    setView('logs');
     try {
-      setShowSales(false);
-      setShowProductions(false);
-      const fetchedLogs: ActionLog[] = await loadLogs(); // Ensure this returns ActionLog[]
-      setLogs(fetchedLogs);
-    } catch (error) {
-      console.error("Error loading logs:", error);
+      const fetched = await loadLogs();
+      setLogs(fetched);
+    } catch (e) {
+      console.error('Error loading logs:', e);
     }
   };
-  
 
+  // form state
   const unitOptions = [
     { key: 'pcs', text: 'Pieces', value: 'pcs' },
     { key: 'boxes', text: 'Boxes', value: 'boxes' }
@@ -97,182 +90,200 @@ export default observer(function SaleDashboard() {
       clientId,
       productionOrderId,
       unitOfMeasure,
-      pricePerUnit: parseFloat(pricePerUnit), 
+      pricePerUnit: parseFloat(pricePerUnit),
       quantitySold: parseInt(quantitySold),
       saleDate,
       targetMarket
     };
     createRecord(newSaleRecord).then(() => {
-      loadSaleRecords(); // Ponovno učitavanje prodajnih zapisa nakon kreiranja novog
+      loadSaleRecords();
+      // reset some inputs
+      setQuantitySold('');
+      setPricePerUnit('');
     });
   };
 
   return (
-    <Grid style={{ marginTop: '0em' }}>
-      <Grid.Column width='10'>
-        <Button
-          onClick={() => {setShowSales(true); setShowProductions(false)}}
-          color={showSales ? 'teal' : 'grey'}
-        >
-          Show Sale Records
-        </Button>
-        <Button
-          onClick={() => {setShowSales(false); setShowProductions(true)}}
-          color={!showSales ? 'teal' : 'grey'}
-        >
-          Show Production Records
-        </Button>
+    <Grid stackable>
+      <Grid.Row>
+        <Grid.Column width={16}>
+          <Header as='h2' content='Quality Supervisor' subheader='Register sales, review productions, and view action logs' />
+          <Button.Group>
+            <Button color={view === 'sales' ? 'teal' : undefined} onClick={() => setView('sales')}>
+              <Icon name='shopping cart' /> Sales
+            </Button>
+            <Button color={view === 'productions' ? 'teal' : undefined} onClick={() => setView('productions')}>
+              <Icon name='factory' /> Productions
+            </Button>
+            <Button color={view === 'logs' ? 'teal' : undefined} onClick={handleShowLogs}>
+              <Icon name='history' /> Logs
+            </Button>
+          </Button.Group>
+          <Divider />
+        </Grid.Column>
+      </Grid.Row>
 
-        {/* Dugme za prikaz logova */}
-        <Button 
-          onClick={handleShowLogs}
-          color='blue'
-        >
-          Show Action Logs
-        </Button>
+      <Grid.Row columns={2}>
+        <Grid.Column width={8}>
+          <Card fluid>
+            <Card.Content>
+              <Card.Header>
+                <Icon name='plus circle' /> Create Sale Record
+              </Card.Header>
+            </Card.Content>
+            <Card.Content>
+              <Form onSubmit={handleSubmit}>
+                <Form.Field>
+                  <label>Tyre</label>
+                  <Dropdown
+                    placeholder='Select Tyre'
+                    fluid selection
+                    options={tyreStore.tyreOptions}
+                    value={tyreCode}
+                    onChange={(_e, { value }) => setTyreCode(value as string)}
+                  />
+                </Form.Field>
+                <Form.Field>
+                  <label>Client</label>
+                  <Dropdown
+                    placeholder='Select Client'
+                    fluid selection
+                    options={clientStore.clientOptions}
+                    value={clientId}
+                    onChange={(_e, { value }) => setClientId(value as string)}
+                  />
+                </Form.Field>
+                <Form.Group widths='equal'>
+                  <Form.Input
+                    label='Production Order Id'
+                    placeholder='e.g. 68eed7...'
+                    value={productionOrderId}
+                    onChange={e => setProductionOrderId(e.target.value)}
+                  />
+                  <Form.Input
+                    label='Quantity'
+                    type='number'
+                    min='0'
+                    value={quantitySold}
+                    onChange={e => setQuantitySold(e.target.value)}
+                  />
+                </Form.Group>
+                <Form.Group widths='equal'>
+                  <Form.Input
+                    label='Price per Unit'
+                    type='number'
+                    min='0'
+                    step='0.01'
+                    value={pricePerUnit}
+                    onChange={e => setPricePerUnit(e.target.value)}
+                  />
+                  <Form.Field>
+                    <label>Unit</label>
+                    <Dropdown
+                      placeholder='Select Unit'
+                      fluid selection
+                      options={unitOptions}
+                      value={unitOfMeasure}
+                      onChange={(_e, { value }) => setUnitOfMeasure(value as string)}
+                    />
+                  </Form.Field>
+                </Form.Group>
+                <Form.Group widths='equal'>
+                  <Form.Field>
+                    <label>Target Market</label>
+                    <Dropdown
+                      placeholder='Select Market'
+                      fluid selection
+                      options={targetMarketOptions}
+                      value={targetMarket}
+                      onChange={(_e, { value }) => setTargetMarket(value as string)}
+                    />
+                  </Form.Field>
+                  <Form.Input
+                    label='Sale Date'
+                    type='date'
+                    value={saleDate ? saleDate.toISOString().split('T')[0] : ''}
+                    onChange={e => setSaleDate(e.target.value ? new Date(e.target.value) : null)}
+                  />
+                </Form.Group>
+                <Button type='submit' color='teal' loading={isSubmitting}>
+                  <Icon name='check' /> Create
+                </Button>
+              </Form>
+            </Card.Content>
+          </Card>
+        </Grid.Column>
 
-        {/* Display logs if they are loaded */}
-        {}
-
-
-
-        {showSales ? (
-          <>
-            <Form onSubmit={handleSubmit}>
-              <Form.Field>
-                <label>Tyre Code</label>
-                <Dropdown
-                  placeholder='Select Tyre'
-                  fluid
-                  selection
-                  options={tyreStore.tyreOptions}
-                  value={tyreCode}
-                  onChange={(_e, { value }) => setTyreCode(value as string)}
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>Client</label>
-                <Dropdown
-                  placeholder='Select Client'
-                  fluid
-                  selection
-                  options={clientStore.clientOptions}
-                  value={clientId}
-                  onChange={(_e, { value }) => setClientId(value as string)}
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>Production Order ID</label>
-                <input
-                  placeholder='Enter Production Order ID'
-                  value={productionOrderId}
-                  onChange={(e) => setProductionOrderId(e.target.value)}
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>Unit of Measure</label>
-                <Dropdown
-                  placeholder='Select Unit'
-                  fluid
-                  selection
-                  options={unitOptions}
-                  value={unitOfMeasure}
-                  onChange={(_e, { value }) => setUnitOfMeasure(value as string)}
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>Price Per Unit</label>
-                <input
-                  type='number'
-                  placeholder='Enter Price'
-                  value={pricePerUnit}
-                  onChange={(e) => setPricePerUnit(e.target.value)}
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>Quantity Sold</label>
-                <input
-                  type='number'
-                  placeholder='Enter Quantity'
-                  value={quantitySold}
-                  onChange={(e) => setQuantitySold(e.target.value)}
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>Target Market</label>
-                <Dropdown
-                  placeholder='Select Market'
-                  fluid
-                  selection
-                  options={targetMarketOptions}
-                  value={targetMarket}
-                  onChange={(_e, { value }) => setTargetMarket(value as string)}
-                />
-              </Form.Field>
-              <Form.Field>
-                <label>Sale Date</label>
-                <input
-                  type='date'
-                  placeholder='Select Sale Date'
-                  value={saleDate ? saleDate.toISOString().split('T')[0] : ''}
-                  onChange={(e) => setSaleDate(new Date(e.target.value))}
-                />
-              </Form.Field>
-              <Button type='submit' color='teal'>
-                Create Sale Record
-              </Button>
-            </Form>
-
-            {(loadingInitial && !loadingNext) || isSubmitting ? (
-              <>
-                <SaleRecordItemPlaceholder />
-                <SaleRecordItemPlaceholder />
-              </>
-            ) : (
-              <InfiniteScroll
-                pageStart={0}
-                loadMore={handleGetNext}
-                hasMore={!loadingNext && !!pagination && pagination.currentPage < pagination.totalPages}
-                initialLoad={false}
-              >
-                <br />
-                <br />
-                <SaleRecordList />
-              </InfiniteScroll>
-            )}
-          </>
-        ) : showProductions ? (
-          (loadingInitial && !loadingNext) || isSubmitting ? (
+        {/* Right column: dynamic content based on view */}
+        <Grid.Column width={8}>
+          {view === 'sales' && (
             <>
-              <ProductionRecordItemPlaceholder />
-              <ProductionRecordItemPlaceholder />
+              {(loadingInitial && !loadingNext) || isSubmitting ? (
+                <>
+                  <SaleRecordItemPlaceholder />
+                  <SaleRecordItemPlaceholder />
+                </>
+              ) : (
+                <Segment>
+                  <Header as='h3'>
+                    <Icon name='list' />
+                    <Header.Content>Recent Sales</Header.Content>
+                  </Header>
+                  <Divider />
+                  <InfiniteScroll
+                    pageStart={0}
+                    loadMore={handleGetNextSales}
+                    hasMore={!loadingNext && !!pagination && pagination.currentPage < pagination.totalPages}
+                    initialLoad={false}
+                  >
+                    <SaleRecordList />
+                  </InfiniteScroll>
+                  <Loader active={loadingNext} inline='centered' />
+                </Segment>
+              )}
             </>
-          ) : (
-            <InfiniteScroll
-              pageStart={0}
-              loadMore={handleGetNextProd}
-              hasMore={!loadingNext && !!pagination && pagination.currentPage < pagination.totalPages}
-              initialLoad={false}
-            >
-              <br/>
-              <ProductionRedordList />
-            </InfiniteScroll>
-          )
-        ) : (
-          logs.length > 0 && (
+          )}
+
+          {view === 'productions' && (
+            <>
+              {(loadingInitial && !loadingNext) || isSubmitting ? (
+                <>
+                  <ProductionRecordItemPlaceholder />
+                  <ProductionRecordItemPlaceholder />
+                </>
+              ) : (
+                <Segment>
+                  <Header as='h3'>
+                    <Icon name='settings' />
+                    <Header.Content>Recent Productions</Header.Content>
+                  </Header>
+                  <Divider />
+                  <InfiniteScroll
+                    pageStart={0}
+                    loadMore={handleGetNextProd}
+                    hasMore={!loadingNext && !!pagination && pagination.currentPage < pagination.totalPages}
+                    initialLoad={false}
+                  >
+                    <ProductionRedordList />
+                  </InfiniteScroll>
+                  <Loader active={loadingNext} inline='centered' />
+                </Segment>
+              )}
+            </>
+          )}
+
+          {view === 'logs' && (
             <Segment>
-                <h3>Action Logs:</h3>
-                <ActionLogList />  {/* This will now display all log details */}
+              <Header as='h3'>
+                <Icon name='history' />
+                <Header.Content>Action Logs</Header.Content>
+              </Header>
+              <Divider />
+              <ActionLogList />
             </Segment>
-        )
-        )}
-      </Grid.Column>
-      <Grid.Column width='6'>
-        {/* Prazan Grid za potencijalnu upotrebu */}
-      </Grid.Column>
-      <Grid.Column width={10}>
-        <Loader active={loadingNext} />
-      </Grid.Column>
+          )}
+        </Grid.Column>
+      </Grid.Row>
     </Grid>
   );
 });

@@ -1,19 +1,35 @@
-import {Button, Container, Menu} from "semantic-ui-react";
+import { observer } from 'mobx-react-lite';
+import { Container, Dropdown, Icon, Menu } from 'semantic-ui-react';
+import { useStore } from '../stores/store';
 
-export default function NavBar() {
-    return (
-        <Menu inverted fixed='top'>
-            <Container>
-                <Menu.Item header>
-                    <img src='/assets/logo.png' alt='logo' style={{marginRight: 10}}/>
-                    Tyre Management System
-                </Menu.Item>
-                <Menu.Item name='Tyres' />
-                <Menu.Item name='Errors' />
-                <Menu.Item>
-                    <Button positive content='Create Tyre' />
-                </Menu.Item>
-            </Container>
-        </Menu>
-    )
-}
+export default observer(function NavBar() {
+  const { userStore } = useStore();
+  const user = userStore.user;
+
+  return (
+    <Menu fixed='top' inverted className="app-navbar">
+      <Container>
+        <Menu.Item>
+          <Icon name='tint' style={{ marginRight: 6 }} />
+          Tyre Management
+        </Menu.Item>
+
+        {user ? (
+        <Menu.Item position='right'>
+            <Menu.Menu position='right'>
+                <Dropdown pointing='top right' text={user.userName ?? 'Account'}>
+                <Dropdown.Menu>
+                    <Dropdown.Item onClick={userStore.loguot}>
+                    <Icon name='sign out' /> Logout
+                    </Dropdown.Item>
+                </Dropdown.Menu>
+                </Dropdown>
+
+            </Menu.Menu>
+        </Menu.Item>
+        ) : null}
+
+      </Container>
+    </Menu>
+  );
+});

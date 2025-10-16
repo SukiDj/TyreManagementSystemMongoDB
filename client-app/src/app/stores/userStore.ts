@@ -69,6 +69,17 @@ export default class userStore{
         router.navigate('/');
     }
 
+    getUser = async () =>{
+        try{
+            const user = await agent.Account.current();
+            store.commonStore.setToken(user.token);//uvek kad dobijemo usera sa servera setujemo token i startujemo timer
+            this.startRefreshTokenTimer(user);//ovo treba da pozovemo svuda kad dobijemo usera od server
+            runInAction(()=> this.user = user);
+        } catch(error){
+            console.log(error);
+        }
+    }
+
     register = async (podaci: RegisterUserFormValues) => {
         try{
             await agent.Account.register(podaci);
@@ -80,7 +91,22 @@ export default class userStore{
         }
         
     }
-
+    setUser = (user: User) => {
+        this.user = user;
+        window.localStorage.setItem('jwt', user.token);   
+        store.commonStore.token = user.token;             
+    };
+      refreshToken = async () => {
+        this.stopRefreshTokenTimer();
+        try {
+            const user = await agent.Account.refreshToken(); // POST /Account/refreshToken (Authorized)
+            runInAction(() => (this.user = user));
+            store.commonStore.setToken(user.token);
+            this.startRefreshTokenTimer(user);
+        } catch (err) {
+        console.log(err);
+        }
+    };
 
     private startRefreshTokenTimer(user: User){
         const jwToken = JSON.parse(atob(user.token.split('.')[1]));//atob vadi info iz tokena
@@ -90,23 +116,7 @@ export default class userStore{
         console.log({refreshTimeout: this.refreshTokenTimeout});
     }
 
-    refreshToken = async () => {
-        this.stopRefreshTokenTimer();
-        try
-        {
-            const user = await agent.Account.refreshToken();
-            runInAction(() => this.user = user);
-            store.commonStore.setToken(user.token);
-            this.startRefreshTokenTimer(user);//ovo treba da pozovemo svuda kad dobijemo usera od server
-        }
-        catch(error)
-        {
-            console.log(error);
-        }
-    }
-
     private stopRefreshTokenTimer() {
-        clearTimeout(this.refreshTokenTimeout)
+        clearTimeout(this.refreshTokenTimeout);
     }
-
 }
