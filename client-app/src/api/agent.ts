@@ -139,6 +139,10 @@ const Records = {
 
     getAllProductionHistory: () => axios.get<ProductionRecord[]>(`/QualitySupervisor/productionHistory`),
 
+    getProductionHistoryRq: (operatorId: string) => requests.get<ProductionRecord[]>(`/ProductionOperator/history`),
+
+    getAllProductionHistoryRq: () => requests.get<ProductionRecord[]>(`/QualitySupervisor/productionHistory`),
+
     getAllSaleHistory: () => axios.get<SaleRecord[]>(`/QualitySupervisor/saleHistory`)
 }
 
@@ -146,7 +150,8 @@ const Account = {
     current: () => requests.get<User>('/Account'),
     login: (user:UserFormValues) => requests.post<User>('/Account/login', user),
     refreshToken: () => requests.post<User>('/Account/refreshToken/', {}),
-    register: (user: RegisterUserFormValues) => requests.post<User>('/Account/register', user)
+    register: (user: RegisterUserFormValues) => requests.post<User>('/Account/register', user),
+    getOperators: () => requests.get<User[]>('/Account/operators')
 }
 
 const BusinessUnit = {

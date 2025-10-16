@@ -10,6 +10,7 @@ import ProductionRecordItemPlaceholder from '../ProductionOperatorPage/Productio
 import ProductionRedordList from '../ProductionOperatorPage/ProductionRedordList';
 import { ActionLog } from '../../models/ActionLog';
 import ActionLogList from './ActionLogList';
+import productionRecordStore from '../../stores/productionRecordStore';
 
 export default observer(function QSPage() {
   const { userStore } = useStore();
@@ -27,6 +28,7 @@ export default observer(function QSPage() {
     },
     tyreStore,
     clientStore,
+    productionRecordStore,
     recordStore: { loadAllProductionRecords },
     logStore: { loadLogs }
   } = useStore();
@@ -38,6 +40,7 @@ export default observer(function QSPage() {
     setPagingParams(new PagingParams(0));
     loadAllProductionRecords();
     loadSaleRecords();
+    if (productionRecordStore.recordRegistry.size === 0) productionRecordStore.loadAllProductionRecords();
     if (tyreStore.tyreRegistry.size === 0) tyreStore.loadTyres();
     if (clientStore.clientRegistry.size === 0) clientStore.loadClients();
   }, [loadSaleRecords, setPagingParams, tyreStore, clientStore, loadAllProductionRecords]);
@@ -134,16 +137,6 @@ export default observer(function QSPage() {
             <Card.Content>
               <Form onSubmit={handleSubmit}>
                 <Form.Field>
-                  <label>Tyre</label>
-                  <Dropdown
-                    placeholder='Select Tyre'
-                    fluid selection
-                    options={tyreStore.tyreOptions}
-                    value={tyreCode}
-                    onChange={(_e, { value }) => setTyreCode(value as string)}
-                  />
-                </Form.Field>
-                <Form.Field>
                   <label>Client</label>
                   <Dropdown
                     placeholder='Select Client'
@@ -154,12 +147,16 @@ export default observer(function QSPage() {
                   />
                 </Form.Field>
                 <Form.Group widths='equal'>
-                  <Form.Input
-                    label='Production Order Id'
-                    placeholder='e.g. 68eed7...'
+                  <Form.Field>
+                  <label>Production</label>
+                  <Dropdown
+                    placeholder='Select Production Order'
+                    fluid selection
+                    options={productionRecordStore.productionOptions}
                     value={productionOrderId}
-                    onChange={e => setProductionOrderId(e.target.value)}
+                    onChange={(_e, { value }) => setProductionOrderId(value as string)}
                   />
+                </Form.Field>
                   <Form.Input
                     label='Quantity'
                     type='number'

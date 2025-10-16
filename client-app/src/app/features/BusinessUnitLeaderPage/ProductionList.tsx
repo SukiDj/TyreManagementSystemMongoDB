@@ -11,10 +11,14 @@ export default observer(function ProductionList() {
   const [selectedShift, setSelectedShift] = useState<number | null>(null);
   const [selectedMachineId, setSelectedMachineId] = useState<string>('');
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>('');
+  const { machineStore } = useStore();
+  const { userStore } = useStore();
 
   useEffect(() => {
     recordStore.loadAllProductionRecords();
-  }, [recordStore]);
+    machineStore.loadMachines();
+    userStore.getAllOperators();
+  }, [recordStore, machineStore, userStore]);
 
   const summaryOptions = [
     { key: 'day', text: 'Production by day', value: 'day' },
@@ -79,18 +83,28 @@ export default observer(function ProductionList() {
               />
             )}
             {summaryType === 'machine' && (
-              <Form.Input
-                label="Machine ID"
+              <Form.Field>
+              <label>Machine</label>
+              <Dropdown
+                placeholder='Select Machine'
+                fluid selection
+                options={machineStore.machineOptions}
                 value={selectedMachineId}
-                onChange={(e) => setSelectedMachineId(e.target.value)}
+                onChange={(_e, { value }) => setSelectedMachineId(value as string)}
               />
+              </Form.Field>
             )}
             {summaryType === 'operator' && (
-              <Form.Input
-                label="Operator ID"
+              <Form.Field>
+              <label>Operator</label>
+              <Dropdown
+                placeholder='Select Operator'
+                fluid selection
+                options={userStore.OperatorsOptions}
                 value={selectedOperatorId}
-                onChange={(e) => setSelectedOperatorId(e.target.value)}
+                onChange={(_e, { value }) => setSelectedOperatorId(value as string)}
               />
+              </Form.Field>
             )}
           </Form.Group>
 

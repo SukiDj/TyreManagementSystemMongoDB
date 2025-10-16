@@ -4,7 +4,6 @@ import agent from "../../api/agent";
 import { format } from "date-fns";
 import { Pagination, PagingParams } from "../models/Pagination";
 import { store } from "./store";
-import { date } from "yup";
 
 export default class RecordStore {
     recordRegistry = new Map<string, ProductionRecord>();
@@ -107,9 +106,9 @@ export default class RecordStore {
     loadProductionRecords = async (userId: string) => {
         this.setLoadingInitial(true);
         try {
-            const result = await agent.Records.getProductionHistory(userId);
+            const result = await agent.Records.getProductionHistoryRq(userId);
             console.log(result);
-            result.data.forEach(record => {
+            result.forEach(record => {
                 this.setRecord(record); 
             });
             //this.setPagination(result.pagination); // Set pagination if applicable
@@ -123,9 +122,9 @@ export default class RecordStore {
     loadAllProductionRecords = async () => {
         this.setLoadingInitial(true);
         try {
-            const result = await agent.Records.getAllProductionHistory();
+            const result = await agent.Records.getAllProductionHistoryRq();
             console.log(result);
-            result.data.forEach(record => {
+            result.forEach(record => {
                 this.setRecord(record); 
             });
             //this.setPagination(result.pagination); // Set pagination if applicable
@@ -207,6 +206,13 @@ export default class RecordStore {
         }
     }
     
+    get productionOptions() {
+        return Array.from(this.recordRegistry.values()).map((record) => ({
+        key: record.id,      // Unique key
+        text: record.id,     // Displayed in the dropdown
+        value: record.id,    // Value to be selected
+        }));
+    }
     
 
 }

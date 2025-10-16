@@ -2,7 +2,6 @@ namespace Application.Sales
 {
     public class RegisterTyreSaleDto
     {
-        public string TyreId { get; set; }
         public string ClientId { get; set; }
         public int QuantitySold { get; set; }
         public double PricePerUnit { get; set; }

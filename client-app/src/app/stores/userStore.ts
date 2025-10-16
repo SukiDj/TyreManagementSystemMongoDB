@@ -9,10 +9,34 @@ export default class userStore{
     user: User | null = null;
     refreshTokenTimeout?: number;
     registerNow : boolean = false;
-
+    userRegistry = new Map<string, User>();
 
     constructor(){
         makeAutoObservable(this);
+    }
+
+    setUserForRegistry = (user: User) => {
+        this.userRegistry.set(user.userName, user);
+    }
+
+    getAllOperators = async () => {
+        try {
+            const users = await agent.Account.getOperators();
+            runInAction(() => {
+                this.userRegistry.clear();
+                users.forEach(user => this.setUserForRegistry(user));
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    get OperatorsOptions() {
+        return Array.from(this.userRegistry.values()).map((user) => ({
+          key: user.id,
+          text: user.userName,
+          value: user.id
+        }));
     }
 
     RegisterNow = () => this.registerNow = true;

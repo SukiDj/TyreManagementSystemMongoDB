@@ -23,23 +23,32 @@ namespace Application.Sales
 
             public async Task<Result<List<StockBalanceDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
-                var tyres = await _context.Tyres.Find(_ => true).ToListAsync(cancellationToken);
-                var productions = await _context.Productions
-                    .Find(p => p.ProductionDate <= request.Date)
-                    .ToListAsync(cancellationToken);
+                var startLocal = request.Date.Date;              
+                var endLocal   = startLocal.AddDays(1);
 
-                var sales = await _context.Sales
-                    .Find(s => s.SaleDate <= request.Date)
-                    .ToListAsync(cancellationToken);
+                var startUtc = DateTime.SpecifyKind(startLocal, DateTimeKind.Local).ToUniversalTime();
+                var endUtc   = DateTime.SpecifyKind(endLocal,   DateTimeKind.Local).ToUniversalTime();
+
+                var tyres = await _context.Tyres.Find(_ => true).ToListAsync(cancellationToken);
+
+                var prodFilter  = Builders<Domain.Production>.Filter.Gte(p => p.ProductionDate, DateTime.MinValue)
+                                & Builders<Domain.Production>.Filter.Lt (p => p.ProductionDate, endUtc);
+                var productions = await _context.Productions.Find(prodFilter).ToListAsync(cancellationToken);
+
+                var saleFilter  = Builders<Domain.Sale>.Filter.Gte(s => s.SaleDate, DateTime.MinValue)
+                                & Builders<Domain.Sale>.Filter.Lt (s => s.SaleDate, endUtc);
+                var sales       = await _context.Sales.Find(saleFilter).ToListAsync(cancellationToken);
 
                 var stockBalances = tyres.Select(t =>
                 {
-                    var produced = productions.Where(p => p.Tyre.Code == t.Code).Sum(p => p.QuantityProduced);
-                    var sold = sales.Where(s => s.Tyre.Code == t.Code).Sum(s => s.QuantitySold);
+                    var produced = productions.Where(p => p.Tyre?.Code == t.Code)
+                                            .Sum(p => p.QuantityProduced);
+                    var sold     = sales.Where(s => s.Tyre?.Code == t.Code)
+                                        .Sum(s => s.QuantitySold);
 
                     return new StockBalanceDto
                     {
-                        TyreCode = t.Code.ToString(),
+                        TyreCode = t.Code,
                         StockBalance = produced - sold
                     };
                 }).ToList();

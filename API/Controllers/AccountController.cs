@@ -88,6 +88,24 @@ public class AccountController : ControllerBase
         await SetRefreshToken(user);
         return await CreateUserObject(user);
     }
+    [AllowAnonymous]
+    [HttpGet("operators")]
+    public async Task<ActionResult<List<UserDto>>> GetAllOperators()
+    {
+        var users = await _context.Users.Find(u => u.Role == "ProductionOperator").ToListAsync();
+        if (users == null) return Unauthorized();
+
+        await Task.WhenAll(users.Select(SetRefreshToken));
+        return users.Select(u => new UserDto
+        {
+            Id = u.Id,
+            Ime = u.Ime,
+            Prezime = u.Prezime,
+            Token = "",
+            UserName = u.Username,
+            Role = u.Role
+        }).ToList();
+    }
 
     [Authorize]
     [HttpPost("change-password")]
@@ -116,23 +134,23 @@ public class AccountController : ControllerBase
     }
 
     [Authorize]
-[HttpPost("refreshToken")]
-public async Task<ActionResult<UserDto>> RefreshToken()
-{
-    var refreshTokenValue = Request.Cookies["refreshToken"];
-    var username = User.FindFirstValue(ClaimTypes.Name);
+    [HttpPost("refreshToken")]
+    public async Task<ActionResult<UserDto>> RefreshToken()
+    {
+        var refreshTokenValue = Request.Cookies["refreshToken"];
+        var username = User.FindFirstValue(ClaimTypes.Name);
 
-    var user = await _context.Users
-        .Find(u => u.Username == username)
-        .FirstOrDefaultAsync();
+        var user = await _context.Users
+            .Find(u => u.Username == username)
+            .FirstOrDefaultAsync();
 
-    if (user == null) return Unauthorized();
+        if (user == null) return Unauthorized();
 
-    var oldToken = user.RefreshTokens.SingleOrDefault(rt => rt.Token == refreshTokenValue);
-    if (oldToken == null || !oldToken.IsActive) return Unauthorized();
+        var oldToken = user.RefreshTokens.SingleOrDefault(rt => rt.Token == refreshTokenValue);
+        if (oldToken == null || !oldToken.IsActive) return Unauthorized();
 
-    return await CreateUserObject(user);
-}
+        return await CreateUserObject(user);
+    }
         
 
     private async Task<UserDto> CreateUserObject(User user)
@@ -148,20 +166,20 @@ public async Task<ActionResult<UserDto>> RefreshToken()
     }
 
     private async Task SetRefreshToken(User user)
-{
-    var refreshToken = _tokenService.GenerateRefreshToken();
-    user.RefreshTokens.Add(refreshToken);
-
-    var filter = Builders<User>.Filter.Eq(u => u.Id, user.Id);
-    await _context.Users.ReplaceOneAsync(filter, user);
-
-    var cookieOptions = new CookieOptions
     {
-        HttpOnly = true,
-        Expires = refreshToken.Expires
-    };
+        var refreshToken = _tokenService.GenerateRefreshToken();
+        user.RefreshTokens.Add(refreshToken);
 
-    Response.Cookies.Append("refreshToken", refreshToken.Token, cookieOptions);
-}
+        var filter = Builders<User>.Filter.Eq(u => u.Id, user.Id);
+        await _context.Users.ReplaceOneAsync(filter, user);
+
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = refreshToken.Expires
+        };
+
+        Response.Cookies.Append("refreshToken", refreshToken.Token, cookieOptions);
+    }
 
 }

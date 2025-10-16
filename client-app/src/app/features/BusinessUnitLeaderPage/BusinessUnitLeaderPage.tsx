@@ -10,10 +10,12 @@ type Section = 'production' | 'sales' | 'stock';
 
 export default observer(function BusinessUnitLeaderPage() {
   const { saleRecordStore, recordStore } = useStore();
+  const { machineStore } = useStore();
   const [section, setSection] = useState<Section>('production');
 
   useEffect(() => {
     // warm up caches so switching tabs is instant
+    machineStore.loadMachines();
     saleRecordStore.loadSaleRecords();
     recordStore.loadAllProductionRecords();
   }, [saleRecordStore, recordStore]);

@@ -3,7 +3,6 @@ import { useStore } from '../../stores/store';
 import { observer } from 'mobx-react-lite';
 import SaleRecordItem from './SaleRecordItem.tsx';
 import { Fragment } from 'react/jsx-runtime';
-import { SaleRecordFromValues } from '../../models/SaleRecord.ts';
 
 export default observer(function SaleRecordList() {
   const { saleRecordStore } = useStore();
@@ -17,13 +16,13 @@ export default observer(function SaleRecordList() {
             <Header sub color='teal'>
               {group}  {}
             </Header>
-            {
-              records.map(record => (
-                <SaleRecordItem key={record.id} record={record} onSubmit={function (updatedValues: SaleRecordFromValues): void {
-                  throw new Error('Function not implemented.');
-                } } />  // Prikazujemo svaki prodajni zapis
-              ))
-            }
+            {records.map((record, idx) => (
+              <SaleRecordItem
+                key={record.id ?? `${record.clientId}-${record.productionOrderId}-${idx}`}
+                record={record}
+                onSubmit={() => {}}
+              />
+            ))}
           </Fragment>
         ))
       }

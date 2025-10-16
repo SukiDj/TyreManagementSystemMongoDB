@@ -39,23 +39,17 @@ export default class RecordStore {
     createRecord = async (record: SaleRecordFromValues) => {
         this.isSubmitting = true;
         try {
-            
-
             await agent.QualitySupervisor.registerSale(record);
-            const newRecord = new SaleRecord(record);
-            console.log(newRecord);
-            runInAction(() => {
-                this.recordRegistry.set(newRecord.id!, newRecord);
-                this.selectedRecord = newRecord;
-                this.isSubmitting = false;
-            });
+            await this.loadSaleRecords();
         } catch (error) {
-            console.log(error);
+            console.log('[registerSale:error]', error);
+        } finally {
             runInAction(() => {
-                this.isSubmitting = false;
+            this.isSubmitting = false;
             });
         }
     };
+
 
     updateRecord = async (id: string | undefined, record: SaleRecordFromValues) => {
         try {

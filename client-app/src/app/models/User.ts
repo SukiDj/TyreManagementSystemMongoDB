@@ -1,4 +1,5 @@
 export interface User{
+    id:string;
     ime: string;
     prezime:string;
     telefon:string;

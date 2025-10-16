@@ -24,13 +24,13 @@ namespace Application.Productions
 
             public async Task<Result<List<ProductionDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
-                // filter productions by date (compare date parts)
-                var start = request.Date.Date;
-                var end = start.AddDays(1);
+                var startLocal = request.Date.Date;
 
-                var filter = Builders<Production>.Filter.Gte(p => p.ProductionDate, start) &
-                             Builders<Production>.Filter.Lt(p => p.ProductionDate, end);
+                var startUtc = DateTime.SpecifyKind(startLocal, DateTimeKind.Local).ToUniversalTime();
+                var endUtc   = startUtc.AddDays(1);
 
+                var filter = Builders<Production>.Filter.Gte(p => p.ProductionDate, startUtc) &
+                    Builders<Production>.Filter.Lt (p => p.ProductionDate, endUtc);
                 var productions = await _context.Productions.Find(filter).ToListAsync(cancellationToken);
 
                 var result = productions.Select(p => new ProductionDto
