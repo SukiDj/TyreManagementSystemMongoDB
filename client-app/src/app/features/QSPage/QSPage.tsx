@@ -10,11 +10,8 @@ import ProductionRecordItemPlaceholder from '../ProductionOperatorPage/Productio
 import ProductionRedordList from '../ProductionOperatorPage/ProductionRedordList';
 import { ActionLog } from '../../models/ActionLog';
 import ActionLogList from './ActionLogList';
-import productionRecordStore from '../../stores/productionRecordStore';
 
 export default observer(function QSPage() {
-  const { userStore } = useStore();
-  const user = userStore.user;
   const {
     saleRecordStore: {
       setPagingParams,

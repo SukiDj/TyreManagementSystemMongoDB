@@ -213,6 +213,17 @@ export default class RecordStore {
         value: record.id,    // Value to be selected
         }));
     }
+
+    deleteProductionRecord = async (id: string) => {
+        try {
+          await agent.QualitySupervisor.deleteProductionRecord(id); 
+          runInAction(() => {
+            this.recordRegistry.delete(id);
+          });
+        } catch (error) {
+          console.log(error);
+        }
+    };
     
 
 }

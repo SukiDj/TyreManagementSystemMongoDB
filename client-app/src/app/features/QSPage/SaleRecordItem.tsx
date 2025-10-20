@@ -1,60 +1,52 @@
-import { Button, Form, Icon, Item, Segment } from "semantic-ui-react";
-import { SaleRecord, SaleRecordFromValues } from "../../models/SaleRecord";
-import { observer } from "mobx-react-lite";
-import { useStore } from "../../stores/store"; // Uvoz store-a
-import { useState } from "react";
+import { Button, Icon, Item, Segment, Form } from 'semantic-ui-react';
+import { SaleRecord, SaleRecordFromValues } from '../../models/SaleRecord';
+import { observer } from 'mobx-react-lite';
+import { useStore } from '../../stores/store';
+import { useState } from 'react';
 
 interface Props {
   record: SaleRecord;
-  onSubmit: (updatedValues: SaleRecordFromValues) => void;
 }
 
 export default observer(function SaleRecordItem({ record }: Props) {
-  const { saleRecordStore } = useStore(); 
-  const [isDeleting, setIsDeleting] = useState(false); 
-  const [isEditing, setIsEditing] = useState(false); 
-  const [updatedValues, setUpdatedValues] = useState<SaleRecordFromValues>({
-    tyreId: record.tyreCode,
-    clientId: record.clientId,
-    productionOrderId: record.productionOrderId,
-    targetMarket: record.targetMarket,
+  const { userStore: { isQualitySupervisor }, saleRecordStore } = useStore();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [updated, setUpdated] = useState({
     pricePerUnit: record.pricePerUnit,
-    unitOfMeasure: record.unitOfMeasure,
     quantitySold: record.quantitySold
   });
 
-  const handleDelete = async (id: string) => {
-    setIsDeleting(true);
-    try {
-      await saleRecordStore.deleteSaleRecord(id);
-    } catch (error) {
-      console.error("Error deleting record:", error);
-    } finally {
-      setIsDeleting(false); // Reset loading stanja
-    }
-  };
-
-  // Funkcija za submit izmena
-  const handleSubmit = async () => {
-    try {
-      console.log(record.id);
-      await saleRecordStore.updateRecord(record.id, updatedValues);
-      setIsEditing(false); // Zatvara formu nakon uspešne izmene
-    } catch (error) {
-      console.error("Error updating record:", error);
-    }
-  };
-
-  // Funkcija za editovanje
-  const handleEditClick = () => {
-    setIsEditing(true); // Otvara formu za editovanje
-  };
-
-  // Funkcija za ažuriranje vrednosti forme
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
-    setUpdatedValues({ ...updatedValues, [name]: value });
-  };
+    // price is decimal, quantity is integer
+    if (name === 'pricePerUnit') {
+      const n = Number(value);
+      if (Number.isFinite(n)) setUpdated(p => ({ ...p, pricePerUnit: n }));
+    } else if (name === 'quantitySold') {
+      const n = Math.trunc(Number(value));
+      if (Number.isFinite(n)) setUpdated(p => ({ ...p, quantitySold: n }));
+    }
+  }
+
+  async function handleSubmit() {
+    const payload: SaleRecordFromValues = {
+      tyreId: record.tyreCode,
+      clientId: record.clientId,
+      productionOrderId: record.productionOrderId,
+      targetMarket: record.targetMarket,
+      unitOfMeasure: record.unitOfMeasure,
+      pricePerUnit: updated.pricePerUnit,
+      quantitySold: updated.quantitySold
+    };
+
+    await saleRecordStore.updateRecord(record.id!, payload);
+    setIsEditing(false);
+  }
+
+  async function handleDelete() {
+    await saleRecordStore.deleteSaleRecord(record.id!);
+  }
 
   return (
     <Segment.Group>
@@ -62,105 +54,74 @@ export default observer(function SaleRecordItem({ record }: Props) {
         <Item.Group>
           <Item>
             <Item.Content>
-              <Item.Header>
-                Tyre Code: {record.tyreCode}
-              </Item.Header>
-              <Item.Description>
-                Client ID: {record.clientId}
-              </Item.Description>
-              <Item.Description>
-                Production Order ID: {record.productionOrderId}
-              </Item.Description>
-              <Item.Description>
-                Target Market: {record.targetMarket}
-              </Item.Description>
+              <Item.Header>Tyre: {record.tyreType}</Item.Header>
+              <Item.Meta>Tyre Code: {record.tyreCode}</Item.Meta>
+              <Item.Description>Client: {record.clientName}</Item.Description>
+              <Item.Description>Production Order ID: {record.productionOrderId}</Item.Description>
+              <Item.Description>Target Market: {record.targetMarket}</Item.Description>
+              <Item.Description>Unit of Measure: {record.unitOfMeasure}</Item.Description>
             </Item.Content>
           </Item>
         </Item.Group>
       </Segment>
 
       <Segment>
-        <span>
-          <Icon name="calendar" /> Sale Date: {record.saleDate ? record.saleDate.toDateString() : 'N/A'}
+        <span style={{ display: 'inline-flex', gap: 18 }}>
+          <span>
+            <Icon name="calendar" /> {record.saleDate ? record.saleDate.toDateString() : 'N/A'}
+          </span>
+          <span>
+            <Icon name="dollar sign" /> Price per unit: ${record.pricePerUnit}
+          </span>
+          <span>
+            <Icon name="box" /> Quantity sold: {record.quantitySold}
+          </span>
         </span>
       </Segment>
 
-      <Segment>
-        <span>
-          <Icon name="dollar sign" /> Price Per Unit: ${record.pricePerUnit}
-        </span>
-      </Segment>
-
-      <Segment>
-        <span>
-          <Icon name="box" /> Quantity Sold: {record.quantitySold}
-        </span>
-      </Segment>
-
-      {isEditing ? (
-        <Segment>
-          <Form>
-            <Form.Input
-              label="Tyre Code"
-              name="tyreCode"
-              value={updatedValues.tyreId}
-              onChange={handleInputChange}
-            />
-            <Form.Input
-              label="Client ID"
-              name="clientId"
-              value={updatedValues.clientId}
-              onChange={handleInputChange}
-            />
-            <Form.Input
-              label="Production Order ID"
-              name="productionOrderId"
-              value={updatedValues.productionOrderId}
-              onChange={handleInputChange}
-            />
-            <Form.Input
-              label="Target Market"
-              name="targetMarket"
-              value={updatedValues.targetMarket}
-              onChange={handleInputChange}
-            />
-            <Form.Input
-              label="Unit of measure"
-              name="unitOfMeasure"
-              value={updatedValues.unitOfMeasure}
-              onChange={handleInputChange}
-            />
-            <Form.Input
-              label="Price Per Unit"
-              name="pricePerUnit"
-              value={updatedValues.pricePerUnit}
-              onChange={handleInputChange}
-            />
-            <Form.Input
-              label="Quantity Sold"
-              name="quantitySold"
-              value={updatedValues.quantitySold}
-              onChange={handleInputChange}
-            />
-            <Button color="green" onClick={handleSubmit} content="Save" />
-            <Button color="grey" onClick={() => setIsEditing(false)} content="Cancel" />
-          </Form>
-        </Segment>
-      ) : (
+      {isQualitySupervisor && (
         <Segment clearing>
           <Button
+            basic
             color="blue"
             floated="right"
-            content="Edit"
-            onClick={handleEditClick}
+            content={isEditing ? 'Cancel' : 'Edit'}
+            onClick={() => setIsEditing(v => !v)}
           />
           <Button
             color="red"
             floated="right"
-            loading={isDeleting}
             content="Delete"
-            onClick={() => handleDelete(record.id!)}
+            onClick={handleDelete}
           />
+        </Segment>
+      )}
+
+      {isEditing && (
+        <Segment>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group widths="equal">
+              <Form.Input
+                label="Price Per Unit"
+                name="pricePerUnit"
+                type="number"
+                step="0.01"
+                min="0"
+                value={updated.pricePerUnit}
+                onChange={handleChange}
+              />
+              <Form.Input
+                label="Quantity Sold"
+                name="quantitySold"
+                type="number"
+                step="1"
+                min="0"
+                value={updated.quantitySold}
+                onChange={handleChange}
+              />
+            </Form.Group>
+            <Button positive content="Save" />
+          </Form>
         </Segment>
       )}
     </Segment.Group>

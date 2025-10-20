@@ -11,16 +11,20 @@ interface Props {
 export default observer(function ProductionRecordItem({ record }: Props) {
   const { userStore: { isQualitySupervisor }, recordStore } = useStore();
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [updated, setUpdated] = useState({
     shift: record.shift,
     quantityProduced: record.quantityProduced,
+    machineName: record.machineName,
+    operatorName: record.operatorName,
+    tyreType: record.tyreType
   });
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target;
-    setUpdated((p) => ({ ...p, [name]: name === 'shift' ? Number(value) : Number(value) }));
+    setUpdated((p) => ({ ...p, [name]: Number(value) }));
   }
 
   async function handleSubmit() {
@@ -34,15 +38,26 @@ export default observer(function ProductionRecordItem({ record }: Props) {
     setIsEditing(false);
   }
 
+  async function handleDelete() {
+    if (!record.id) return;
+      setIsDeleting(true);
+    try {
+      await recordStore.deleteProductionRecord(record.id);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <Segment.Group>
       <Segment>
         <Item.Group>
           <Item>
             <Item.Content>
-              <Item.Header>Machine #{record.machineNumber}</Item.Header>
-              <Item.Meta>Tyre: {record.tyreCode}</Item.Meta>
-              <Item.Description>Operator ID: {record.operatorId}</Item.Description>
+              <Item.Header>Production: {record.id}</Item.Header>
+              <Item.Content>Machine: {record.machineName}</Item.Content>
+              <Item.Meta>Tyre: {record.tyreType}</Item.Meta>
+              <Item.Description>Operator UserName: {record.operatorName}</Item.Description>
             </Item.Content>
           </Item>
         </Item.Group>
@@ -70,6 +85,13 @@ export default observer(function ProductionRecordItem({ record }: Props) {
             floated="right"
             content={isEditing ? 'Cancel' : 'Edit'}
             onClick={() => setIsEditing((v) => !v)}
+          />
+          <Button
+            color="red"
+            floated="right"
+            content="Delete"
+            loading={isDeleting}
+            onClick={handleDelete}
           />
         </Segment>
       )}

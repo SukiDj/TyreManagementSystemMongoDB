@@ -4,5 +4,6 @@ namespace Application.Sales
     {
         public string TyreCode { get; set; }
         public int StockBalance { get; set; }
+        public string TyreType { get; set; }
     }
 }

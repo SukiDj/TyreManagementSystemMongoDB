@@ -32,32 +32,19 @@ namespace Application.Sales
 
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
-                var sale = await _context.Sales.Find(s => s.Id == request.Id).FirstOrDefaultAsync(cancellationToken);
-                if (sale == null) return Result<Unit>.Failure("Sale not found");
+                var filter = Builders<Sale>.Filter.Eq(s => s.Id, request.Id);
 
-                var tyre = await _context.Tyres.Find(t => t.Code == request.TyreId).FirstOrDefaultAsync(cancellationToken);
-                var client = await _context.Clients.Find(c => c.Id == request.ClientId).FirstOrDefaultAsync(cancellationToken);
+                var update = Builders<Sale>.Update.Combine(
+                    Builders<Sale>.Update.Set(s => s.QuantitySold, request.QuantitySold),
+                    Builders<Sale>.Update.Set(s => s.PricePerUnit, request.PricePerUnit)
+                );
 
-                if (tyre == null || client == null)
-                    return Result<Unit>.Failure("Invalid references for Tyre or Client");
+                var result = await _context.Sales.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
 
-                sale.Tyre = new TyreInfo
-                {
-                    Code = tyre.Code,
-                    Name = tyre.Name
-                };
-                sale.Client = new ClientInfo
-                {
-                    Id = client.Id,
-                    Name = client.Name
-                };
-                sale.QuantitySold = request.QuantitySold;
-                sale.PricePerUnit = request.PricePerUnit;
-                sale.SaleDate = request.SaleDate;
+                if (result.MatchedCount == 0)
+                    return Result<Unit>.Failure("Sale not found");
 
-                await _context.Sales.ReplaceOneAsync(s => s.Id == request.Id, sale, cancellationToken: cancellationToken);
-
-                await _actionLogger.LogActionAsync("UpdateSale", $"Sale updated for Id: {sale.Id}");
+                await _actionLogger.LogActionAsync("UpdateSale", $"Sale updated for Id: {request.Id}");
 
                 return Result<Unit>.Success(Unit.Value);
             }

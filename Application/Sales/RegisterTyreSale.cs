@@ -28,7 +28,6 @@ namespace Application.Sales
 
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
-                // 1) Production must exist
                 var production = await _context.Productions
                     .Find(p => p.Id == request.Sale.ProductionOrderId)
                     .FirstOrDefaultAsync(cancellationToken);
@@ -39,7 +38,6 @@ namespace Application.Sales
                 if (production.Tyre == null || string.IsNullOrWhiteSpace(production.Tyre.Code))
                     return Result<Unit>.Failure("Production is missing tyre reference.");
 
-                // 2) Client must exist
                 var client = await _context.Clients
                     .Find(c => c.Id == request.Sale.ClientId)
                     .FirstOrDefaultAsync(cancellationToken);
@@ -47,11 +45,7 @@ namespace Application.Sales
                 if (client == null)
                     return Result<Unit>.Failure($"Invalid Client reference: {request.Sale.ClientId}");
 
-                // (Optional) If DTO still has TyreId, enforce it matches production's tyre
-                // if (!string.IsNullOrEmpty(request.Sale.TyreId) && request.Sale.TyreId != production.Tyre.Code)
-                //     return Result<Unit>.Failure("Selected Tyre does not match the Production's tyre.");
-
-                // 3) Compute available quantity for THIS production order
+                //Available quantity for THIS production order
                 var existingSales = await _context.Sales
                     .Find(s => s.ProductionId == production.Id)
                     .Project(s => s.QuantitySold)
@@ -68,8 +62,6 @@ namespace Application.Sales
                     );
                 }
 
-
-                // 5) Create sale using tyre info from PRODUCTION
                 var sale = new Sale
                 {
                     Tyre = new TyreInfo
@@ -82,7 +74,7 @@ namespace Application.Sales
                         Id = client.Id,
                         Name = client.Name
                     },
-                    SaleDate = request.Sale.SaleDate, 
+                    SaleDate = request.Sale.SaleDate,
                     QuantitySold = request.Sale.QuantitySold,
                     PricePerUnit = request.Sale.PricePerUnit,
                     UnitOfMeasure = request.Sale.UnitOfMeasure,
@@ -90,12 +82,70 @@ namespace Application.Sales
                     ProductionId = production.Id
                 };
 
+                //Delivery creating with location calculation
+                var machine = await _context.Machines
+                    .Find(m => m.Id == production.Machine.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (machine == null)
+                    return Result<Unit>.Failure($"Production machine not found: {production.Machine.Id}");
+                if (machine?.Location?.Coordinates is not { Length: 2 })
+                    return Result<Unit>.Failure("Machine has no location");
+
+                var origin = new BsonDocument
+                {
+                    { "type", "Point" },
+                    { "coordinates", new BsonArray(machine.Location.Coordinates) }
+                };
+
+                var geoNear = new BsonDocument("$geoNear", new BsonDocument
+                {
+                    { "near", origin },
+                    { "key", "location" },     // field in ClientLocations
+                    { "spherical", true },
+                    { "distanceField", "distanceMeters" },           
+                    { "query", new BsonDocument("clientId", new ObjectId(client.Id)) }
+                });
+
+                var projection = new BsonDocument("$project", new BsonDocument
+                {
+                    { "_id", 1 },
+                    { "location", 1 },
+                    { "distanceMeters", 1 }
+                });
+
+                var limit = new BsonDocument("$limit", 1);
+
+                var pick = await _context.ClientLocations
+                    .Aggregate<BsonDocument>(new[] { geoNear, projection, limit })
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (pick == null)
+                    return Result<Unit>.Failure("No client locations found for nearest search");
+
+                var destCoords = pick["location"]["coordinates"].AsBsonArray.Select(x => x.ToDouble()).ToArray();
+                var destination = new GeoPoint { Type = "Point", Coordinates = destCoords };
+                var distanceMeters = pick["distanceMeters"].ToDouble();
+
+                var delivery = new Delivery
+                {
+                    Client = client.Name,
+                    Origin = machine.Location,
+                    Destination = destination,
+                    DistanceMeters = distanceMeters,
+                    Status = "Pending"
+                };
+                
                 await _context.Sales.InsertOneAsync(sale, cancellationToken: cancellationToken);
 
                 await _actionLogger.LogActionAsync(
                     "RegisterSale",
                     $"Sale registered for Production: {production.Id}, Tyre: {production.Tyre.Code}, Client: {client.Id}, Qty: {request.Sale.QuantitySold}"
                 );
+
+                await _context.Deliveries.InsertOneAsync(delivery, cancellationToken: cancellationToken);
+                await _actionLogger.LogActionAsync(
+                    "CreateDelivery",
+                    $"Delivery created for sale {sale.Id} for Client {client.Name}");
 
                 return Result<Unit>.Success(Unit.Value);
             }

@@ -5,6 +5,9 @@ import { useStore } from '../stores/store';
 import { Container, Loader } from 'semantic-ui-react';
 import NavBar from './NavBar';
 import { Outlet } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 export default observer(function App() {
   const {commonStore, userStore} = useStore();
@@ -24,6 +27,7 @@ export default observer(function App() {
   return (
     <>
       <NavBar />
+      <ToastContainer position="top-right" hideProgressBar={false} newestOnTop />
       <div className='page-content'>
         <Container>
           <Outlet />

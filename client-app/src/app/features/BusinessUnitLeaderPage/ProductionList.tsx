@@ -118,7 +118,7 @@ export default observer(function ProductionList() {
             <Table.Row>
               <Table.HeaderCell>Machine</Table.HeaderCell>
               <Table.HeaderCell>Operator</Table.HeaderCell>
-              <Table.HeaderCell>Tyre Code</Table.HeaderCell>
+              <Table.HeaderCell>Tyre Type</Table.HeaderCell>
               <Table.HeaderCell>Quantity</Table.HeaderCell>
               <Table.HeaderCell>Date</Table.HeaderCell>
               <Table.HeaderCell>Shift</Table.HeaderCell>
@@ -135,9 +135,9 @@ export default observer(function ProductionList() {
 
                 {records.map((r) => (
                   <Table.Row key={r.id}>
-                    <Table.Cell>{r.machineNumber}</Table.Cell>
-                    <Table.Cell>{r.operatorId}</Table.Cell>
-                    <Table.Cell>{r.tyreCode}</Table.Cell>
+                    <Table.Cell>{r.machineName}</Table.Cell>
+                    <Table.Cell>{r.operatorName}</Table.Cell>
+                    <Table.Cell>{r.tyreType}</Table.Cell>
                     <Table.Cell>{r.quantityProduced}</Table.Cell>
                     <Table.Cell>{r.productionDate?.toDateString()}</Table.Cell>
                     <Table.Cell>{r.shift}</Table.Cell>

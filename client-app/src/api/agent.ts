@@ -14,6 +14,7 @@ import { SaleRecord, SaleRecordFromValues } from '../app/models/SaleRecord';
 import { Client } from '../app/models/Client';
 import { StockRecord } from '../app/models/StockRecord';
 import { ActionLog } from '../app/models/ActionLog';
+import { Delivery } from '../app/models/Delivery';
 
 const sleep =(delay: number) =>{
     return new Promise((resolve)=>{
@@ -30,62 +31,59 @@ axios.interceptors.request.use(config => {
 })
 
 axios.interceptors.response.use(async response =>{
-        if (import.meta.env.DEV) await sleep(1000);// NOVO
-        const pagination = response.headers['pagination'];
-        if(pagination){
-            response.data = new PaginatedResult(response.data,JSON.parse(pagination));
-            return response as AxiosResponse<PaginatedResult<any>>
-        }
-        return response;
+    const pagination = response.headers['pagination'];
+    if(pagination){
+        response.data = new PaginatedResult(response.data,JSON.parse(pagination));
+        return response as AxiosResponse<PaginatedResult<any>>
+    }
+    return response;
 
-}, (error: AxiosError) =>{
+}, (error: AxiosError) => {
     const {data,status, config, headers} = error.response as AxiosResponse;
     switch (status) {
         case 400:
-            if(config.method === 'get' && Object.prototype.hasOwnProperty.call(data.errors,'id')){
+            if (config?.method === 'get' && data?.errors?.id) {
                 router.navigate('/not-found');
+                break;
+                
             }
-            if(data.errors){
-                const modalStateErrors =[];
-                for(const key in data.errors){
-                    if(data.errors[key]){
-                        modalStateErrors.push(data.errors[key])
-                    }
+            if (data?.errors) {
+                const modalStateErrors: string[] = [];
+                for (const key in data.errors) {
+                    if (data.errors[key]) modalStateErrors.push(...data.errors[key]);
                 }
-                throw modalStateErrors.flat();
-            } else{
-                toast.error(data);
-                //console.log("odavde");
+                console.log(modalStateErrors);
+                modalStateErrors.forEach(m => toast.error(m));
+                break;
             }
-            toast.error('bad request');
-            //console.log("odavde");
+            toast.error(data?.message ?? (typeof data === 'string' ? data : 'Bad request'));
             break;
 
         case 401:
-            if(status === 401 && headers['www-authenticate']?.startsWith('Bearer error="invalid_token'))
-            {
+            if (headers['www-authenticate']?.startsWith('Bearer error="invalid_token')) {
                 store.userStore.loguot();
                 toast.error('Sesija je istekla - molimo Vas da se ulogujete ponovo.');
-            } else{
-                toast.error('unauthorised');
+            } else {
+                toast.error(data?.message ?? 'Unauthorized');
             }
             break;
-            
+
         case 403:
-            toast.error('forbidden');
+            toast.error('Forbidden');
             break;
-            
+
         case 404:
-            router.navigate('/not found');
+            router.navigate('/not-found');
             break;
-            
+
         case 500:
             store.commonStore.setServerError(data);
             router.navigate('/server-error');
             break;
     }
+
     return Promise.reject(error);
-})
+});
 
 
 const responseBody = <T>(response: AxiosResponse<T>) => response.data;
@@ -115,23 +113,24 @@ const Records = {
     }) =>
         requests.post<void>('/QualitySupervisor/registerTyreSale', saleData),
         
-    updateProduction: (id: string, productionUpdate: { shift: number, quantityProduced: number}) =>
-        axios.put<void>(`/QualitySupervisor/updateProduction/${id}`, {
+    updateProduction: (id: string, data: { shift: number; quantityProduced: number }) =>
+        axios.put<void>(`/QualitySupervisor/updateProduction/${id}`, null, {
             params: {
-                shift: productionUpdate.shift,
-                quantityProduced: productionUpdate.quantityProduced
+            shift: data.shift,
+            quantityProduced: data.quantityProduced,
+            date: new Date().toISOString()
             }
         }),
 
-        updateSale: (id: string, saleUpdate: { pricePerUnit: number, clientId: string, quantitySold: number, tyreId: string }) =>
-            axios.put<void>(`/QualitySupervisor/updateSale/${id}`, null, {
-                params: {
-                    tyreId: saleUpdate.tyreId,
-                    clientId: saleUpdate.clientId,
-                    quantitySold: saleUpdate.quantitySold,
-                    pricePerUnit: saleUpdate.pricePerUnit
-                }
-            }),
+    updateSale: (id: string, saleUpdate: { pricePerUnit: number, clientId: string, quantitySold: number, tyreId: string }) =>
+        axios.put<void>(`/QualitySupervisor/updateSale/${id}`, null, {
+            params: {
+                tyreId: saleUpdate.tyreId,
+                clientId: saleUpdate.clientId,
+                quantitySold: saleUpdate.quantitySold,
+                pricePerUnit: saleUpdate.pricePerUnit
+            }
+        }),
 
     deleteSaleRecord: (id: string) => requests.del(`/QualitySupervisor/deleteSale/${id}`),
         
@@ -165,11 +164,12 @@ const BusinessUnit = {
 };
 
 const ProductionOperator ={
-    registerProduction: (production:RecordFromValues) => requests.post<void>(`/ProductionOperator/registerProduction`, production)
+    registerProduction: (production:RecordFromValues) => requests.post<void>(`/ProductionOperator/registerProduction`, production),
 }
 
 const QualitySupervisor ={
-    registerSale: (sale:SaleRecordFromValues) => requests.post<void>(`/QualitySupervisor/registerTyreSale`, sale)
+    registerSale: (sale:SaleRecordFromValues) => requests.post<void>(`/QualitySupervisor/registerTyreSale`, sale),
+    deleteProductionRecord: (id: string) => requests.del(`/QualitySupervisor/deleteProduction/${id}`)
 }
 
 const Tyres = {
@@ -192,6 +192,11 @@ const Logs = {
     list: () => requests.get<ActionLog[]>('/ActionLog/GetActions'), // Poziv GET /api/log za povlačenje logova
 };
 
+const Deliveries = {
+  list: () => requests.get<Delivery[]>('/deliveries'),
+  markDelivered: (id: string) => requests.put<void>(`/deliveries/${id}/deliver`, {})
+};
+
 const agent = {
     Account,
     Records,
@@ -202,7 +207,8 @@ const agent = {
     StockRecords,
     Logs,
     ProductionOperator,
-    QualitySupervisor
+    QualitySupervisor,
+    Deliveries
 };
 
 export default agent;

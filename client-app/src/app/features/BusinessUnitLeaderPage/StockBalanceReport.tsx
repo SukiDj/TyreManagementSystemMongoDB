@@ -35,14 +35,14 @@ export default observer(function StockBalanceReport() {
         <Table celled>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Tyre Code</Table.HeaderCell>
+              <Table.HeaderCell>Tyre Type</Table.HeaderCell>
               <Table.HeaderCell>Stock Balance</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {stockRecordStore.stockBalance.map((r) => (
               <Table.Row key={r.tyreCode}>
-                <Table.Cell>{r.tyreCode}</Table.Cell>
+                <Table.Cell>{r.tyreType}</Table.Cell>
                 <Table.Cell>{r.stockBalance}</Table.Cell>
               </Table.Row>
             ))}

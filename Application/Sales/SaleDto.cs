@@ -10,5 +10,7 @@ namespace Application.Sales
         public int QuantitySold { get; set; }
         public DateTime SaleDate { get; set; }
         public string ClientId { get; set; }
+        public string ClientName { get; set; }
+        public string TyreType { get; set; }
     }
 }

@@ -8,6 +8,8 @@ import ProductionOperatorPage from "../features/ProductionOperatorPage/Productio
 import RequireBusinessUnitLeader from "./RequireBusinessUnitLeader.tsx";
 import BusinessUnitLeaderPage from "../features/BusinessUnitLeaderPage/BusinessUnitLeaderPage.tsx";
 import RegisterSuccess from "../features/Users/RegisterSuccess.tsx";
+import ServerError from "../features/errors/ServerError";
+import NotFound from "../features/errors/NotFound";
 
 export const routes: RouteObject[] = [
     {
@@ -21,18 +23,20 @@ export const routes: RouteObject[] = [
                 ]
             },
             {
-                element: <RequireProductionOperator />, children: [//oovo sve moze i admin tako sam namestio u RequireVodic ako ocemo da ga iskljucujemo
+                element: <RequireProductionOperator />, children: [
                     {path: 'ProductionOperatorPage', element:<ProductionOperatorPage/>}
                 ]
             },
             {
-                element: <RequireBusinessUnitLeader />, children: [//oovo sve moze i admin tako sam namestio u RequireVodic ako ocemo da ga iskljucujemo
+                element: <RequireBusinessUnitLeader />, children: [
                     {path: 'BusinessUnitLeaderPage', element:<BusinessUnitLeaderPage/>}
                 ]
             },
 
             {path:'', element:<HomePage />},
-            {path:'/RegisterSuccess', element:<RegisterSuccess />}
+            {path:'/RegisterSuccess', element:<RegisterSuccess />},
+            { path: '/server-error', element: <ServerError /> },
+            { path: '/not-found', element: <NotFound /> }
         ]
     }
     

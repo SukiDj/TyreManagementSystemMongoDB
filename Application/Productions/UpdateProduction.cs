@@ -11,7 +11,7 @@ namespace Application.Productions
     {
         public class Command : IRequest<Result<Unit>>
         {
-            public string Id { get; set; }
+            public string Id { get; set; } = default!;
             public int Shift { get; set; }
             public int QuantityProduced { get; set; }
             public DateTime Date { get; set; }
@@ -31,18 +31,17 @@ namespace Application.Productions
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
                 var filter = Builders<Production>.Filter.Eq(p => p.Id, request.Id);
-                var production = await _context.Productions.Find(filter).FirstOrDefaultAsync(cancellationToken);
 
-                if (production == null)
-                    return Result<Unit>.Failure("Proizvodnja nije pronađena.");
+                var update = Builders<Production>.Update
+                    .Set(p => p.Shift, request.Shift)
+                    .Set(p => p.QuantityProduced, request.QuantityProduced);
 
-                production.Shift = request.Shift;
-                production.QuantityProduced = request.QuantityProduced;
-                production.ProductionDate = request.Date;
+                var result = await _context.Productions.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
 
-                await _context.Productions.ReplaceOneAsync(filter, production, cancellationToken: cancellationToken);
+                if (result.MatchedCount == 0)
+                    return Result<Unit>.Failure("Production record not found.");
 
-                await _actionLogger.LogActionAsync("UpdateProduction", $"Production updated for Id: {production.Id}");
+                await _actionLogger.LogActionAsync("UpdateProduction", $"Production updated for Id: {request.Id}");
 
                 return Result<Unit>.Success(Unit.Value);
             }

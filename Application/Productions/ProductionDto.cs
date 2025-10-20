@@ -9,5 +9,8 @@ namespace Application.Productions
         public string MachineNumber { get; set; }
         public DateTime ProductionDate { get; set; }
         public string OperatorId { get; set; }
+        public string MachineName { get; set; }
+        public string OperatorName { get; set; }
+        public string TyreType { get; set; }
     }
 }

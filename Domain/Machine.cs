@@ -14,5 +14,8 @@ namespace Domain
 
         [BsonElement("type")]
         public string Type { get; set; }
+        
+        [BsonElement("location")]
+        public GeoPoint Location { get; set; } = default!;
     }
 }

@@ -37,8 +37,8 @@ namespace Application.Sales
 
                 var saleFilter  = Builders<Domain.Sale>.Filter.Gte(s => s.SaleDate, DateTime.MinValue)
                                 & Builders<Domain.Sale>.Filter.Lt (s => s.SaleDate, endUtc);
-                var sales       = await _context.Sales.Find(saleFilter).ToListAsync(cancellationToken);
-
+                var sales = await _context.Sales.Find(saleFilter).ToListAsync(cancellationToken);
+                
                 var stockBalances = tyres.Select(t =>
                 {
                     var produced = productions.Where(p => p.Tyre?.Code == t.Code)
@@ -49,6 +49,7 @@ namespace Application.Sales
                     return new StockBalanceDto
                     {
                         TyreCode = t.Code,
+                        TyreType = t.Name,
                         StockBalance = produced - sold
                     };
                 }).ToList();

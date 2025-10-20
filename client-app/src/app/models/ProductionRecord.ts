@@ -6,6 +6,9 @@ export interface ProductionRecord {
     shift: number;
     machineNumber: number;
     operatorId: string;
+    machineName?: string;
+    operatorName?: string;
+    tyreType?: string;
 }
 
 export class ProductionRecord implements ProductionRecord {
@@ -20,6 +23,9 @@ export class RecordFromValues {
     machineId: string = '';
     shift: number = 0;
     quantityProduced: number = 0;
+    machineName?: string = undefined;
+    operatorName?: string = undefined;
+    tyreType?: string = undefined;
 
     constructor(record?: RecordFromValues) {
         if (record) {
@@ -28,6 +34,9 @@ export class RecordFromValues {
             this.quantityProduced = record.quantityProduced;
             this.shift = record.shift;
             this.machineId = record.machineId;
+            this.machineName = record.machineName;
+            this.operatorName = record.operatorName;
+            this.tyreType = record.tyreType;
         }
     }
 }

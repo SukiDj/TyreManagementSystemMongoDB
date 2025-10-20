@@ -5,8 +5,9 @@ import { useStore } from '../../stores/store';
 import ProductionList from './ProductionList';
 import SaleList from './SaleList';
 import StockBalanceReport from './StockBalanceReport';
+import DeliveryList from './DeliveryList';
 
-type Section = 'production' | 'sales' | 'stock';
+type Section = 'production' | 'sales' | 'stock' | 'deliveries';
 
 export default observer(function BusinessUnitLeaderPage() {
   const { saleRecordStore, recordStore } = useStore();
@@ -54,6 +55,12 @@ export default observer(function BusinessUnitLeaderPage() {
               content="Stock"
               onClick={() => setSection('stock')}
             />
+            <Button
+              primary={section === 'deliveries'}
+              basic={section !== 'deliveries'}
+              content="Deliveries"
+              onClick={() => setSection('deliveries')}
+            />
           </Button.Group>
 
           <Segment basic>
@@ -75,6 +82,12 @@ export default observer(function BusinessUnitLeaderPage() {
                 <p>Pick a date to see stock balance by tyre code.</p>
               </>
             )}
+            {section === 'deliveries' && (
+              <>
+                <Header as="h4">Deliveries</Header>
+                <p>Latest deliveries and status updates.</p>
+              </>
+            )}
           </Segment>
         </Segment>
       </Grid.Column>
@@ -90,12 +103,14 @@ export default observer(function BusinessUnitLeaderPage() {
             {section === 'production' && 'Production Records'}
             {section === 'sales' && 'Sale Records'}
             {section === 'stock' && 'Stock Balance'}
+            {section === 'deliveries' && 'Delivery Records'}
           </Header.Content>
         </Header>
 
         {section === 'production' && <ProductionList />}
         {section === 'sales' && <SaleList />}
         {section === 'stock' && <StockBalanceReport />}
+        {section === 'deliveries' && <DeliveryList />}
       </Grid.Column>
     </Grid>
   );

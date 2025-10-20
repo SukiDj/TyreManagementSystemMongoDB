@@ -32,7 +32,9 @@ namespace Application.Sales
                     ClientId = s.Client?.Id ?? "",
                     TargetMarket = s.TargetMarket,
                     PricePerUnit = s.PricePerUnit,
-                    ProductionOrderId = s.ProductionId
+                    ProductionOrderId = s.ProductionId,
+                    TyreType = s.Tyre.Name,
+                    ClientName = s.Client.Name
                 }).ToList();
 
                 return Result<List<SaleDto>>.Success(salesHistory);

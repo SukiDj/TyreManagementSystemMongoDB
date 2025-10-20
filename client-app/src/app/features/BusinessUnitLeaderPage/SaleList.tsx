@@ -4,13 +4,13 @@ import { Segment, Header, Table } from 'semantic-ui-react';
 import { useEffect } from 'react';
 
 export default observer(function SaleList() {
-  const { saleRecordStore } = useStore(); // Pristupamo `recordStore` koji je definisan za prodajne zapise
+  const { saleRecordStore } = useStore(); 
 
   useEffect(() => {
-    saleRecordStore.loadSaleRecords(); // Poziv funkcije za učitavanje prodajnih zapisa
+    saleRecordStore.loadSaleRecords();
   }, [saleRecordStore]);
 
-  if (saleRecordStore.loadingInitial) return <div>Loading...</div>; // Prikaz stanja učitavanja podataka
+  if (saleRecordStore.loadingInitial) return <div>Loading...</div>; 
 
   return (
     <Segment>
@@ -18,7 +18,7 @@ export default observer(function SaleList() {
       <Table celled>
         <Table.Header>
           <Table.Row>
-            <Table.HeaderCell>Tyre Code</Table.HeaderCell>
+            <Table.HeaderCell>Tyre Type</Table.HeaderCell>
             <Table.HeaderCell>Client</Table.HeaderCell>
             <Table.HeaderCell>Quantity Sold</Table.HeaderCell>
             <Table.HeaderCell>Price Per Unit</Table.HeaderCell>
@@ -36,8 +36,8 @@ export default observer(function SaleList() {
           {saleRecordStore.groupedRecords.map(([_, records]) =>
             records.map(record => (
               <Table.Row key={record.id}>
-                <Table.Cell>{record.tyreCode}</Table.Cell>
-                <Table.Cell>{record.clientId}</Table.Cell>
+                <Table.Cell>{record.tyreType}</Table.Cell>
+                <Table.Cell>{record.clientName}</Table.Cell>
                 <Table.Cell>{record.quantitySold}</Table.Cell>
                 <Table.Cell>{record.pricePerUnit}</Table.Cell>
                 <Table.Cell>{record.saleDate?.toDateString()}</Table.Cell>

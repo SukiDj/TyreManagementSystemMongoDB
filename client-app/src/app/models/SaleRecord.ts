@@ -8,6 +8,8 @@ export interface SaleRecord {
     quantitySold: number;
     saleDate: Date | null;
     targetMarket: string;
+    tyreType?: string;
+    clientName?: string;
 }
 
 export class SaleRecord implements SaleRecord {
@@ -25,6 +27,8 @@ export class SaleRecordFromValues {
     pricePerUnit: number = 0;
     quantitySold: number = 0;
     targetMarket: string = '';
+    tyreType?: string = undefined;
+    clientName?: string = undefined;
 
     constructor(record?: SaleRecordFromValues) {
         if (record) {
@@ -36,6 +40,8 @@ export class SaleRecordFromValues {
             this.unitOfMeasure = record.unitOfMeasure;
             this.pricePerUnit = record.pricePerUnit;
             this.targetMarket = record.targetMarket;
+            this.tyreType = record.tyreType;
+            this.clientName = record.clientName;
         }
     }
 }

@@ -31,7 +31,10 @@ namespace Application.Productions
                     ProductionDate = p.ProductionDate,
                     Shift = p.Shift,
                     MachineNumber = p.Machine?.Id,
-                    OperatorId = p.Operator?.Id
+                    OperatorId = p.Operator?.Id,
+                    MachineName = p.Machine?.Name,
+                    OperatorName = p.Operator?.Name,
+                    TyreType = p.Tyre?.Name
                 }).ToList();
 
                 return Result<List<ProductionDto>>.Success(history);

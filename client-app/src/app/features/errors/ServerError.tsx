@@ -1,21 +1,15 @@
-import { observer } from 'mobx-react-lite';
-import { Container, Header, Segment } from 'semantic-ui-react';
+import { Segment, Header, Icon, Button } from 'semantic-ui-react';
+import { router } from '../../router/Routes';
 
-export default observer (function ServerError() {
-    //const {commonStore} = useStore();
-    //console.log(commonStore.error?.details)
+export default function ServerError() {
   return (
-    <Container style={{marginTop:'10px'}}>
-        <Header as='h1' content='Server Error' />
-        <Header sub as ='h5' color='red' />
-        {
-            
-                <Segment>
-                    <Header as='h4' content='Stack trace' color='teal' />
-                    <code style={{marginTop:'10px'}}>{}</code>
-                </Segment>
-            
-        }
-    </Container>
-  )
-})
+    <Segment placeholder textAlign='center' style={{ marginTop: '2rem' }}>
+      <Header icon color='red'>
+        <Icon name='server' />
+        Server error
+        <Header.Subheader>Something went wrong on our side.</Header.Subheader>
+      </Header>
+      <Button primary onClick={() => router.navigate('/')} content='Back to Home' />
+    </Segment>
+  );
+}
