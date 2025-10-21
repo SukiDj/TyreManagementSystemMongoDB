@@ -8,7 +8,6 @@ namespace Persistence
     {
         private readonly IMongoDatabase _database;
 
-        // Kolekcije
         public IMongoCollection<User> Users { get; }
         public IMongoCollection<Tyre> Tyres { get; }
         public IMongoCollection<Machine> Machines { get; }
@@ -35,7 +34,6 @@ namespace Persistence
             Deliveries = _database.GetCollection<Delivery>("Deliveries");
             ClientLocations = _database.GetCollection<ClientLocation>("ClientLocations");
 
-            // Opcionalno: Kreiranje indeksa (npr. po UserName ili Email)
             //CreateIndexes();
         }
 

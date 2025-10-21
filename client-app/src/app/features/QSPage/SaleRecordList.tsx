@@ -20,7 +20,6 @@ export default observer(function SaleRecordList() {
               <SaleRecordItem
                 key={record.id ?? `${record.clientId}-${record.productionOrderId}-${idx}`}
                 record={record}
-                onSubmit={() => {}}
               />
             ))}
           </Fragment>
