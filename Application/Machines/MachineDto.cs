@@ -7,6 +7,5 @@ namespace Application.Machines
         public string Id { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
-        //public ICollection<Production> Productions { get; set; } = new List<Production>();
     }
 }

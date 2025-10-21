@@ -39,8 +39,6 @@ public class AccountController : ControllerBase
     [HttpPost("logout")]
     public IActionResult Logout()
     {
-        // MongoDB nema session, logout samo brise cookie
-        //Response.Cookies.Delete("refreshToken");
         return Ok("Logout successful");
     }
 

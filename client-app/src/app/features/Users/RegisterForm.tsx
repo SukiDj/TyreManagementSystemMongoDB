@@ -43,7 +43,6 @@ export default observer (function RegisterForm() {
         })}
 
         onSubmit={(values:RegisterUserFormValues, { setErrors }) => {
-  // Create an object with the required fields
   const user = {
     email: values.email,
     password: values.password,
@@ -51,13 +50,12 @@ export default observer (function RegisterForm() {
     prezime: values.prezime,
     username: values.username,
     telefon: values.telefon,
-    datumRodjenja: values.datumRodjenja, // Make sure datumRodjenja is a Date object
+    datumRodjenja: values.datumRodjenja, 
     role: values.role
   };
 
-  // Pass the user object to userStore.register
   userStore
-    .register(user) // Pass the plain object
+    .register(user) 
     .catch((error) => setErrors(error.response.data.errors));
 }}
       >
@@ -72,7 +70,7 @@ export default observer (function RegisterForm() {
               value={registrationType}
               onChange={(_e, { value }) => {
                 setRegistrationType(value as string);
-                setFieldValue('role', value as string); // Update the Formik field 'role' with the selected value
+                setFieldValue('role', value as string); 
               }}
             />
             <TextInput placeholder="Ime" name="ime" />

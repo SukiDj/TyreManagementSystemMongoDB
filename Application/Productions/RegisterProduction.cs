@@ -44,7 +44,6 @@ namespace Application.Productions
 
             public async Task<Result<Unit>> Handle(Command request, CancellationToken cancellationToken)
             {
-                // Pronađi korisnika (operatora)
                 var productionOperator = await _context.Users
                     .Find(x => x.Username == _userAccessor.GetUsername())
                     .FirstOrDefaultAsync(cancellationToken);
@@ -52,7 +51,6 @@ namespace Application.Productions
                 if (productionOperator == null)
                     return Result<Unit>.Failure("Nije pronađen operater!");
 
-                // Pronađi mašinu
                 var machine = await _context.Machines
                     .Find(x => x.Id == request.MachineId)
                     .FirstOrDefaultAsync(cancellationToken);
@@ -60,7 +58,6 @@ namespace Application.Productions
                 if (machine == null)
                     return Result<Unit>.Failure("Mašina nije pronađena!");
 
-                // Pronađi gumu (tyre)
                 var tyre = await _context.Tyres
                     .Find(x => x.Code == request.TyreId)
                     .FirstOrDefaultAsync(cancellationToken);
@@ -68,7 +65,6 @@ namespace Application.Productions
                 if (tyre == null)
                     return Result<Unit>.Failure("Guma nije pronađena!");
 
-                // Kreiraj proizvodnju (Production) sa info objektima
                 var production = new Production
                 {
                     Tyre = new TyreInfo

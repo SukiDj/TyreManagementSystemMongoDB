@@ -35,7 +35,10 @@ namespace Application.Productions
                     QuantityProduced = p.QuantityProduced,
                     MachineNumber = p.Machine?.Id,
                     ProductionDate = p.ProductionDate,
-                    OperatorId = p.Operator?.Id
+                    OperatorId = p.Operator?.Id,
+                    MachineName = p.Machine.Name,
+                    OperatorName = p.Operator.Name,
+                    TyreType = p.Tyre.Name
                 }).ToList();
 
                 return Result<List<ProductionDto>>.Success(result);

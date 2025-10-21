@@ -208,7 +208,7 @@ export default observer(function QSPage() {
           </Card>
         </Grid.Column>
 
-        {/* Right column: dynamic content based on view */}
+        {/* Right side */}
         <Grid.Column width={8}>
           {view === 'sales' && (
             <>

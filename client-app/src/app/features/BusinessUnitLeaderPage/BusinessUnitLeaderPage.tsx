@@ -15,7 +15,6 @@ export default observer(function BusinessUnitLeaderPage() {
   const [section, setSection] = useState<Section>('production');
 
   useEffect(() => {
-    // warm up caches so switching tabs is instant
     machineStore.loadMachines();
     saleRecordStore.loadSaleRecords();
     recordStore.loadAllProductionRecords();
@@ -23,7 +22,7 @@ export default observer(function BusinessUnitLeaderPage() {
 
   return (
     <Grid style={{ marginTop: '1.5rem' }}>
-      {/* Left: section switcher / description */}
+      {/* Left section */}
       <Grid.Column width={16}>
         <Segment raised>
           <Header as="h3">

@@ -19,7 +19,6 @@ export default observer(function SaleRecordItem({ record }: Props) {
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
-    // price is decimal, quantity is integer
     if (name === 'pricePerUnit') {
       const n = Number(value);
       if (Number.isFinite(n)) setUpdated(p => ({ ...p, pricePerUnit: n }));

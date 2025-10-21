@@ -23,14 +23,6 @@ export default function TestErrors() {
         axios.get(baseUrl + 'Buggy/unauthorized').catch(err => console.log(err.response));
     }
 
-    function handleBadGuid() {
-        axios.get(baseUrl + 'Obilazak/notaguid').catch(err => console.log(err.response));//ovo isto nece radi jer nemam ideju sta je notaguid i kude ga je suki napravil 
-    }
-
-    function handleValidationError() {
-        axios.post(baseUrl + 'Obilazak/KreirajObilazak/a', {}).catch(err => setErrors(err));
-    }
-
     return (
         <>
             <Header as='h1' content='Test Error component' />
@@ -38,10 +30,8 @@ export default function TestErrors() {
                 <Button.Group widths='7'>
                     <Button onClick={handleNotFound} content='Not Found' basic primary />
                     <Button onClick={handleBadRequest} content='Bad Request' basic primary />
-                    <Button onClick={handleValidationError} content='Validation Error' basic primary />
                     <Button onClick={handleServerError} content='Server Error' basic primary />
                     <Button onClick={handleUnauthorised} content='Unauthorised' basic primary />
-                    <Button onClick={handleBadGuid} content='Bad Guid' basic primary />
                 </Button.Group>
             </Segment>
             {errors && <ValidationError errors={errors} />}
